@@ -838,6 +838,35 @@ export const AdminView: React.FC<AdminViewProps> = ({
                         {o.items.map((it) => `${it.label} (${it.grams}غ)`).join(' · ')}
                       </div>
 
+                      {o.status === 'C' && (
+                        <div className="rounded-xl border border-[#252823] bg-[#111411] p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-bold text-[#c9a85c]">مرحلة التحضير والتسليم</span>
+                            <span className="text-[10px] text-[#9b988d]">تحديث تجريبي محلي</span>
+                          </div>
+                          <select
+                            value={o.productionStage || 'queued'}
+                            onChange={(e) => {
+                              const stage = e.target.value as NonNullable<Order['productionStage']>;
+                              onUpdate((prev) => ({
+                                ...prev,
+                                ord: prev.ord.map((x) =>
+                                  x.id === o.id ? { ...x, productionStage: stage } : x
+                                ),
+                              }));
+                              onToast('تم تحديث مرحلة الطلب في المعاينة');
+                            }}
+                            className="w-full rounded-lg border border-[#252823] bg-[#171a16] px-3 py-2 text-xs text-[#f3f1ec]"
+                          >
+                            <option value="queued">بانتظار التحضير</option>
+                            <option value="preparing">قيد التحضير</option>
+                            <option value="packed">تم الوزن والتعبئة</option>
+                            <option value="out_for_delivery">خرج للتوصيل</option>
+                            <option value="delivered">تم التسليم</option>
+                          </select>
+                        </div>
+                      )}
+
                       {o.status !== 'X' && (
                         <div className="flex gap-2 pt-1">
                           {o.status === 'W' && (
@@ -847,7 +876,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                                 onUpdate((prev) => ({
                                   ...prev,
                                   ord: prev.ord.map((x) =>
-                                    x.id === o.id ? { ...x, status: 'C' } : x
+                                    x.id === o.id ? { ...x, status: 'C', productionStage: 'queued' } : x
                                   ),
                                 }));
                                 onToast(`تم تأكيد الطلب ${o.id}`);
