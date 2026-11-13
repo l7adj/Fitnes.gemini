@@ -175,7 +175,9 @@ export default function App() {
     setSessionReady(false);
     setSession(nextSession);
     try {
-      await hydrateRemoteWorkspace(nextSession.token, nextSession.user);
+      if (nextSession.user.role === 'customer') {
+        await hydrateRemoteWorkspace(nextSession.token, nextSession.user);
+      }
       setSessionReady(true);
     } catch (error) {
       localStorage.removeItem('nf_auth_token');
@@ -205,7 +207,9 @@ export default function App() {
         if (cancelled) return;
         const restored = { token, user };
         setSession(restored);
-        await hydrateRemoteWorkspace(token, user);
+        if (user.role === 'customer') {
+          await hydrateRemoteWorkspace(token, user);
+        }
       })
       .catch(() => {
         localStorage.removeItem('nf_auth_token');
