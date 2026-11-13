@@ -367,6 +367,11 @@ export const AdminView: React.FC<AdminViewProps> = ({
                         <span className="text-[#5aa882]">C{f.per100.c}</span>{' '}
                         <span className="text-[#c97a57]">F{f.per100.f}</span>
                       </div>
+                      <div className={`mt-1 text-[10px] font-semibold ${f.nutritionDataStatus === 'verified' ? 'text-[#5aa882]' : 'text-[#d4a24c]'}`}>
+                        {f.nutritionDataStatus === 'verified' ? 'بيانات موثقة' : 'بيانات غذائية غير موثقة'}
+                        {' · '}
+                        {f.nutritionBasis === 'raw' ? 'نيء' : f.nutritionBasis === 'cooked' ? 'مطبوخ' : f.nutritionBasis === 'as_sold' ? 'كما يباع' : 'حالة الوزن غير محددة'}
+                      </div>
                     </div>
                   </div>
 
@@ -741,6 +746,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
       {/* TAB 4: ORDERS & PRODUCTION SHOPPING LIST */}
       {subTab === 'orders' && (
         <div className="space-y-4">
+          <div className="rounded-xl border border-[#d4a24c]/30 bg-[#241e12]/70 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]">
+            <strong className="text-[#e5cf94]">لوحة معاينة محلية:</strong>
+            الطلبات والسعة محفوظة على هذا الجهاز فقط. قائمة الشراء تقديرية ولا تُستخدم للتوريد قبل توثيق حالة كل مكوّن وعوامل مردود الطهي.
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="bg-[#111411] border border-[#252823] rounded-2xl p-3.5">
               <div className="text-[11px] text-[#9b988d]">العلب المؤكدة ({formatArabicDate(dlv.date)})</div>
@@ -761,7 +770,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
               </div>
             </div>
             <div className="bg-[#111411] border border-[#252823] rounded-2xl p-3.5">
-              <div className="text-[11px] text-[#9b988d]">تكلفة الشراء الخام</div>
+              <div className="text-[11px] text-[#9b988d]">تكلفة المكونات التقديرية</div>
               <div className="text-xl font-bold text-[#f3f1ec] tabular-nums mt-1">
                 {round0(productionData.totalIngCost)} دج
               </div>
