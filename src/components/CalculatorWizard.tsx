@@ -230,6 +230,9 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               </div>
             </div>
           )}
+          {!state.name.trim() && (
+            <p className="text-[11px] text-[#d4a24c]">أدخل الاسم أو اللقب الذي سيظهر على ملفك قبل المتابعة.</p>
+          )}
 
           <div className="flex gap-2 pt-2">
             <button
@@ -242,7 +245,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </button>
             <button
               type="button"
-              disabled={Boolean(gateErr)}
+              disabled={Boolean(gateErr) || !state.name.trim()}
               onClick={() => setStep(2)}
               className="flex-1 py-3 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] disabled:opacity-40 cursor-pointer"
             >
