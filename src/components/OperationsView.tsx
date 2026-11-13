@@ -7,6 +7,7 @@ interface OperationsViewProps {
   onLogout: () => void;
 }
 type Tab = 'orders'|'foods'|'dishes'|'zones'|'settings';
+const basisLabels: Record<string,string> = {raw:'وزن نيء',cooked:'وزن مطبوخ',as_sold:'كما يباع',unspecified:'حالة وزن غير محددة'};
 const stageLabels: Record<string,string> = {
   queued:'بانتظار التحضير', preparing:'قيد التحضير', packed:'تم الوزن والتعبئة',
   out_for_delivery:'خرج للتوصيل', delivered:'تم التسليم',
@@ -222,7 +223,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
                     <div key={index} className="rounded-lg bg-[#0c100d] p-3 text-xs">
                       <div className="font-bold">{item.label}</div>
                       <div className="mt-1 text-[#aaa79b]">{item.slot_name} · {Math.round(Number(item.grams))}غ</div>
-                      {item.ingredients?.length>0 && <div className="mt-1 text-[10px] text-[#88877b]">{item.ingredients.map((x:any)=>x.name+' '+Math.round(Number(x.grams))+'غ').join(' · ')}</div>}
+                      {item.ingredients?.length>0 && <div className="mt-1 text-[10px] leading-5 text-[#aaa79b]">{item.ingredients.map((x:any)=>x.name+' '+Math.round(Number(x.grams))+'غ · '+(basisLabels[x.basis]??'حالة غير معروفة')+(x.source?' · '+x.source:'')).join(' | ')}</div>}
                     </div>
                   ))}
                 </div>}
