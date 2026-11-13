@@ -7,6 +7,7 @@ import {
   DishItem,
   FoodCategory,
   FoodItem,
+  Order,
 } from '../types';
 import { compressProgressImage } from '../utils/image';
 import { CATEGORY_LABELS, getDishImage, getFoodImage } from '../utils/media';
@@ -108,6 +109,13 @@ export const AdminView: React.FC<AdminViewProps> = ({
       onToast('أدخل اسم المنتج');
       return;
     }
+    if (
+      editingFood.nutritionDataStatus === 'verified' &&
+      (!editingFood.nutritionSource?.trim() || !editingFood.nutritionBasis || editingFood.nutritionBasis === 'unspecified')
+    ) {
+      onToast('لا يمكن اعتماد القيم قبل إدخال مصدر غذائي وحالة الوزن (نيء/مطبوخ/كما يباع)');
+      return;
+    }
     onUpdate((prev) => ({
       ...prev,
       foods: isNewFood
@@ -153,6 +161,23 @@ export const AdminView: React.FC<AdminViewProps> = ({
   };
 
   const updateZone = (id: string, patch: Partial<DeliveryZone>) => {
+    if (patch.active === true) {
+      const zone = state.zones.find((item) => item.id === id);
+      const title = patch.title ?? zone?.title ?? '';
+      const areas = patch.areas ?? zone?.areas ?? '';
+      const hours = patch.hours ?? zone?.hours ?? '';
+      if (
+        !title.trim() ||
+        !areas.trim() ||
+        !hours.trim() ||
+        areas.includes('غير معتمد') ||
+        hours.includes('تجريبي') ||
+        hours.includes('يُحدد')
+      ) {
+        onToast('لا يمكن تفعيل المنطقة قبل إدخال اسمها والأحياء وساعات الخدمة الفعلية');
+        return;
+      }
+    }
     onUpdate((prev) => ({
       ...prev,
       zones: prev.zones.map((z) => (z.id === id ? { ...z, ...patch } : z)),
@@ -163,14 +188,14 @@ export const AdminView: React.FC<AdminViewProps> = ({
     const nextIdx = state.zones.length + 1;
     const newZone: DeliveryZone = {
       id: `z_${Date.now().toString().slice(-5)}`,
-      title: `المنطقة ${nextIdx}`,
-      areas: 'أحياء إضافية',
-      hours: '07:00 – 08:30 صباحًا',
-      fee: 400,
-      active: true,
+      title: `منطقة جديدة ${nextIdx}`,
+      areas: '',
+      hours: '',
+      fee: 0,
+      active: false,
     };
     onUpdate((prev) => ({ ...prev, zones: [...prev.zones, newZone] }));
-    onToast('أُضيفت منطقة توصيل جديدة');
+    onToast('أُضيفت منطقة غير مفعلة؛ أدخل بيانات الخدمة الفعلية قبل تفعيلها');
   };
 
   const deleteZone = (id: string) => {
@@ -321,6 +346,9 @@ export const AdminView: React.FC<AdminViewProps> = ({
                     price: 50,
                     al: [],
                     available: true,
+                    nutritionDataStatus: 'unverified',
+                    nutritionBasis: 'unspecified',
+                    nutritionSource: 'TODO_VERIFY',
                   });
                 }}
                 className="px-4 py-2 rounded-xl font-bold text-xs text-[#141108] bg-gradient-to-l from-[#e5cf94] to-[#c9a85c] flex items-center gap-1 cursor-pointer shrink-0"
@@ -356,6 +384,11 @@ export const AdminView: React.FC<AdminViewProps> = ({
                         <span className="text-[#d4a24c]">P{f.per100.p}</span>{' '}
                         <span className="text-[#5aa882]">C{f.per100.c}</span>{' '}
                         <span className="text-[#c97a57]">F{f.per100.f}</span>
+                      </div>
+                      <div className={`mt-1 text-[10px] font-semibold ${f.nutritionDataStatus === 'verified' ? 'text-[#5aa882]' : 'text-[#d4a24c]'}`}>
+                        {f.nutritionDataStatus === 'verified' ? 'بيانات موثقة' : 'بيانات غذائية غير موثقة'}
+                        {' · '}
+                        {f.nutritionBasis === 'raw' ? 'نيء' : f.nutritionBasis === 'cooked' ? 'مطبوخ' : f.nutritionBasis === 'as_sold' ? 'كما يباع' : 'حالة الوزن غير محددة'}
                       </div>
                     </div>
                   </div>
@@ -731,6 +764,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
       {/* TAB 4: ORDERS & PRODUCTION SHOPPING LIST */}
       {subTab === 'orders' && (
         <div className="space-y-4">
+          <div className="rounded-xl border border-[#d4a24c]/30 bg-[#241e12]/70 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]">
+            <strong className="text-[#e5cf94]">لوحة معاينة محلية:</strong>
+            الطلبات والسعة محفوظة على هذا الجهاز فقط. قائمة الشراء تقديرية ولا تُستخدم للتوريد قبل توثيق حالة كل مكوّن وعوامل مردود الطهي.
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="bg-[#111411] border border-[#252823] rounded-2xl p-3.5">
               <div className="text-[11px] text-[#9b988d]">العلب المؤكدة ({formatArabicDate(dlv.date)})</div>
@@ -751,7 +788,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
               </div>
             </div>
             <div className="bg-[#111411] border border-[#252823] rounded-2xl p-3.5">
-              <div className="text-[11px] text-[#9b988d]">تكلفة الشراء الخام</div>
+              <div className="text-[11px] text-[#9b988d]">تكلفة المكونات التقديرية</div>
               <div className="text-xl font-bold text-[#f3f1ec] tabular-nums mt-1">
                 {round0(productionData.totalIngCost)} دج
               </div>
@@ -819,6 +856,35 @@ export const AdminView: React.FC<AdminViewProps> = ({
                         {o.items.map((it) => `${it.label} (${it.grams}غ)`).join(' · ')}
                       </div>
 
+                      {o.status === 'C' && (
+                        <div className="rounded-xl border border-[#252823] bg-[#111411] p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-bold text-[#c9a85c]">مرحلة التحضير والتسليم</span>
+                            <span className="text-[10px] text-[#9b988d]">تحديث تجريبي محلي</span>
+                          </div>
+                          <select
+                            value={o.productionStage || 'queued'}
+                            onChange={(e) => {
+                              const stage = e.target.value as NonNullable<Order['productionStage']>;
+                              onUpdate((prev) => ({
+                                ...prev,
+                                ord: prev.ord.map((x) =>
+                                  x.id === o.id ? { ...x, productionStage: stage } : x
+                                ),
+                              }));
+                              onToast('تم تحديث مرحلة الطلب في المعاينة');
+                            }}
+                            className="w-full rounded-lg border border-[#252823] bg-[#171a16] px-3 py-2 text-xs text-[#f3f1ec]"
+                          >
+                            <option value="queued">بانتظار التحضير</option>
+                            <option value="preparing">قيد التحضير</option>
+                            <option value="packed">تم الوزن والتعبئة</option>
+                            <option value="out_for_delivery">خرج للتوصيل</option>
+                            <option value="delivered">تم التسليم</option>
+                          </select>
+                        </div>
+                      )}
+
                       {o.status !== 'X' && (
                         <div className="flex gap-2 pt-1">
                           {o.status === 'W' && (
@@ -828,7 +894,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                                 onUpdate((prev) => ({
                                   ...prev,
                                   ord: prev.ord.map((x) =>
-                                    x.id === o.id ? { ...x, status: 'C' } : x
+                                    x.id === o.id ? { ...x, status: 'C', productionStage: 'queued' as const } : x
                                   ),
                                 }));
                                 onToast(`تم تأكيد الطلب ${o.id}`);
@@ -948,7 +1014,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-[#9b988d]">السعر / 100غ (دج)</label>
+                <label className="text-[11px] text-[#9b988d]">السعر / 100{editingFood.cat === 'juice' ? 'مل' : 'غ'} (دج)</label>
                 <input
                   type="number"
                   value={editingFood.price}
@@ -1021,6 +1087,56 @@ export const AdminView: React.FC<AdminViewProps> = ({
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-[#252823] bg-[#171a16] p-3 space-y-2.5">
+              <div>
+                <div className="text-xs font-bold text-[#e5cf94]">توثيق القيم الغذائية</div>
+                <p className="mt-1 text-[10px] leading-5 text-[#9b988d]">
+                  لا تعتمد أي قيمة قبل تحديد مرجعها وحالة الطعام التي تنطبق عليها.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-[#9b988d]">حالة التوثيق</label>
+                  <select
+                    value={editingFood.nutritionDataStatus ?? 'unverified'}
+                    onChange={(e) => setEditingFood({
+                      ...editingFood,
+                      nutritionDataStatus: e.target.value as 'verified' | 'unverified',
+                    })}
+                    className="mt-1 w-full rounded-lg border border-[#252823] bg-[#111411] px-2 py-2 text-xs text-[#f3f1ec]"
+                  >
+                    <option value="unverified">غير موثق</option>
+                    <option value="verified">موثق</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-[#9b988d]">حالة الوزن</label>
+                  <select
+                    value={editingFood.nutritionBasis ?? 'unspecified'}
+                    onChange={(e) => setEditingFood({
+                      ...editingFood,
+                      nutritionBasis: e.target.value as 'raw' | 'cooked' | 'as_sold' | 'unspecified',
+                    })}
+                    className="mt-1 w-full rounded-lg border border-[#252823] bg-[#111411] px-2 py-2 text-xs text-[#f3f1ec]"
+                  >
+                    <option value="unspecified">غير محدد</option>
+                    <option value="raw">نيء</option>
+                    <option value="cooked">مطبوخ</option>
+                    <option value="as_sold">كما يباع</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-[#9b988d]">المصدر / رقم السجل</label>
+                <input
+                  value={editingFood.nutritionSource ?? ''}
+                  onChange={(e) => setEditingFood({ ...editingFood, nutritionSource: e.target.value })}
+                  placeholder="مثال: USDA FoodData Central · FDC ID ..."
+                  className="mt-1 w-full rounded-lg border border-[#252823] bg-[#111411] px-3 py-2 text-xs text-[#f3f1ec]"
+                />
               </div>
             </div>
 

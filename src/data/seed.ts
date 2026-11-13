@@ -32,14 +32,14 @@ export const ACTIVITY_BANDS: Record<
   A: {
     min: 1.7,
     max: 1.99,
-    def: 1.85,
+    def: 1.7,
     label: 'نشط',
     desc: 'حركة يومية وتدريب 3 إلى 5 أيام في الأسبوع',
   },
   V: {
     min: 2.0,
     max: 2.4,
-    def: 2.2,
+    def: 2.1,
     label: 'شديد',
     desc: 'عمل بدني شاق أو تدريب مكثف يوميًا',
   },
@@ -61,7 +61,7 @@ export const GOALS: Record<
     desc: 'فائض طاقة مدروس لدعم الاستشفاء والبناء العضلي',
     multLabel: '×1.10 (+10%)',
     pct: 10,
-    proteinPerKg: 1.9,
+    proteinPerKg: 1.8,
     targetRateKgWk: 0.25,
   },
   cut: {
@@ -69,7 +69,7 @@ export const GOALS: Record<
     desc: 'عجز طاقة منضبط مع بروتين مرتفع لحفظ الكتلة العضلية',
     multLabel: '×0.80 (−20%)',
     pct: -20,
-    proteinPerKg: 2.2,
+    proteinPerKg: 2.0,
     targetRateKgWk: -0.5,
   },
   recomp: {
@@ -77,7 +77,7 @@ export const GOALS: Record<
     desc: 'عجز خفيف لتحسين التركيبة الجسدية تدريجيًا',
     multLabel: '×0.90 (−10%)',
     pct: -10,
-    proteinPerKg: 1.8,
+    proteinPerKg: 1.6,
     targetRateKgWk: -0.15,
   },
   perf: {
@@ -85,7 +85,7 @@ export const GOALS: Record<
     desc: 'توازن سعرات لدعم الشدة البدنية والثبات الوزني',
     multLabel: '×1.00 (ثبات)',
     pct: 0,
-    proteinPerKg: 1.8,
+    proteinPerKg: 1.6,
     targetRateKgWk: 0,
   },
 };
@@ -101,35 +101,35 @@ export const ALLERGENS: Record<AllergenKey, string> = {
 export const DEFAULT_ZONES: DeliveryZone[] = [
   {
     id: 'pickup',
-    title: 'استلام من المطبخ',
-    areas: 'الشراقة — المطبخ المركزي',
-    hours: '06:30 – 08:00 صباحًا',
+    title: 'استلام من المطبخ (مثال)',
+    areas: 'موقع المطبخ — يُحدد لاحقًا',
+    hours: 'نافذة الاستلام — تُحدد لاحقًا',
     fee: 0,
-    active: true,
+    active: false,
   },
   {
     id: 'z1',
-    title: 'المنطقة 1',
-    areas: 'الشراقة · دالي إبراهيم · أولاد فايت',
-    hours: '07:00 – 08:30 صباحًا',
+    title: 'منطقة توصيل تجريبية 1',
+    areas: 'نطاق جغرافي غير معتمد',
+    hours: 'نافذة توصيل تجريبية',
     fee: 150,
-    active: true,
+    active: false,
   },
   {
     id: 'z2',
-    title: 'المنطقة 2',
-    areas: 'عين البنيان · سطاوالي · الدرارية',
-    hours: '07:00 – 08:30 صباحًا',
+    title: 'منطقة توصيل تجريبية 2',
+    areas: 'نطاق جغرافي غير معتمد',
+    hours: 'نافذة توصيل تجريبية',
     fee: 300,
-    active: true,
+    active: false,
   },
   {
     id: 'z3',
-    title: 'المنطقة 3',
-    areas: 'زرالدة وما بعدها',
-    hours: '07:00 – 08:30 صباحًا',
+    title: 'منطقة توصيل تجريبية 3',
+    areas: 'نطاق جغرافي غير معتمد',
+    hours: 'التوقيت — يُحدد لاحقًا',
     fee: 500,
-    active: true,
+    active: false,
   },
 ];
 
@@ -154,24 +154,24 @@ export const QUALITY_CHARTER: string[] = [
 
 export const PICKUP_POINTS = [
   {
-    name: 'مطبخ الشراقة المركزي',
-    area: 'الشراقة · الجزائر العاصمة',
-    hours: '06:30 – 08:00 صباحًا',
-    status: 'نشط الآن',
-    active: true,
-  },
-  {
-    name: 'نقطة استلام دالي إبراهيم (شريك رياضي)',
-    area: 'دالي إبراهيم · صالة شريكة',
-    hours: '07:00 – 09:00 صباحًا',
-    status: 'قريبًا — المرحلة 4',
+    name: 'موقع الاستلام الرئيسي (تجريبي)',
+    area: 'المنطقة — تُحدد لاحقًا',
+    hours: 'التوقيت — يُحدد لاحقًا',
+    status: 'غير معتمد بعد',
     active: false,
   },
   {
-    name: 'نقطة استلام أولاد فايت (شريك رياضي)',
-    area: 'أولاد فايت · صالة شريكة',
-    hours: '07:00 – 09:00 صباحًا',
-    status: 'قريبًا — المرحلة 4',
+    name: 'نقطة استلام شريكة (مقترحة)',
+    area: 'موقع الشريك — يُحدد لاحقًا',
+    hours: 'التوقيت — يُحدد لاحقًا',
+    status: 'مقترحة — غير معتمدة',
+    active: false,
+  },
+  {
+    name: 'نقطة استلام شريكة إضافية (مقترحة)',
+    area: 'موقع الشريك — يُحدد لاحقًا',
+    hours: 'التوقيت — يُحدد لاحقًا',
+    status: 'مقترحة — غير معتمدة',
     active: false,
   },
 ];
@@ -209,7 +209,14 @@ export function seedFoods(): FoodItem[] {
     { id: 'j_str', emoji: '🍓', name: 'سموذي فراولة', cat: 'juice', unitLabel: '100مل', per100: { kcal: 42, p: 0.8, c: 9.6, f: 0.3, fiber: 1.4 }, price: 30, al: [], available: true },
     { id: 'j_avc', emoji: '🥑', name: 'سموذي أفوكادو', cat: 'juice', unitLabel: '100مل', per100: { kcal: 112, p: 2.1, c: 8.5, f: 8.2, fiber: 3.1 }, price: 42, al: [], available: true },
     { id: 'j_lem', emoji: '🍋', name: 'ليمونادة طازجة بالنعناع', cat: 'juice', unitLabel: '100مل', per100: { kcal: 28, p: 0.3, c: 7.2, f: 0.1, fiber: 0.2 }, price: 18, al: [], available: true },
-  ];
+  ].map((food) => ({
+    ...food,
+    // Seed values are illustrative until each ingredient is linked to a
+    // traceable source, preparation state and verified edible-portion record.
+    nutritionDataStatus: 'unverified' as const,
+    nutritionBasis: 'unspecified' as const,
+    nutritionSource: 'TODO_VERIFY',
+  }));
 }
 
 export function seedDishes(): DishItem[] {
@@ -240,7 +247,7 @@ export function createInitialState(): AppState {
   return {
     ver: STATE_VERSION,
     ob: 0,
-    name: 'رياضي الشراقة',
+    name: '',
     sex: 'm',
     age: 28,
     h: 178,
@@ -248,8 +255,9 @@ export function createInitialState(): AppState {
     targetWeight: 80,
     lbm: 0,
     rel: 0,
+    lbmMethod: 'none',
     band: 'A',
-    pal: 1.85,
+    pal: 1.7,
     goal: 'recomp',
     pct: -10,
     al: [],
@@ -267,15 +275,7 @@ export function createInitialState(): AppState {
     zoneId: 'z1',
     orderNote: '',
     ord: [],
-    jr: [
-      { d: fmt(20), w: 84.1 },
-      { d: fmt(17), w: 83.8 },
-      { d: fmt(14), w: 83.5 },
-      { d: fmt(11), w: 83.2 },
-      { d: fmt(7), w: 82.9 },
-      { d: fmt(4), w: 82.6 },
-      { d: fmt(1), w: 82.4 },
-    ],
+    jr: [],
     photos: [],
     cap: 60,
     adh: 92,

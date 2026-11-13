@@ -88,7 +88,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       <div className="max-w-xl mx-auto px-4 py-8 sm:py-12">
         <div className="text-center space-y-3 mb-8">
           <div className="text-xs font-semibold text-[#d8b25c] tracking-wide">
-            الشراقة وما جاورها · الجزائر العاصمة
+            الجزائر · معاينة تفاعلية
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#f4f1e6] text-balance">
             NutriFit DZ
@@ -96,6 +96,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
           <p className="text-base sm:text-lg text-[#f2d491] font-semibold max-w-md mx-auto text-balance">
             يحسب احتياجك بالغرام، يطبخ وجباتك، ويوصلها لبابك صباحًا.
           </p>
+        </div>
+
+        <div className="mb-5 rounded-xl border border-[#d4a24c]/30 bg-[#241e12]/70 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]">
+          <strong className="text-[#e5cf94]">نسخة معاينة:</strong>
+          هذه الواجهة تختبر رحلة العميل والحسابات محلياً. لم تُربط بعد بخدمة طلبات أو مطبخ أو توصيل مباشر.
         </div>
 
         <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-5 space-y-4 mb-6">
@@ -111,11 +116,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </div>
             <div className="flex gap-3">
               <span className="font-num font-bold text-[#d8b25c]">03</span>
-              <span>نطبخ مساءً بعد إغلاق الطلبات الساعة 16:00، والتوصيل 07:00–08:30 صباحًا.</span>
+              <span>تُحدّد نافذة التحضير والتوصيل في ملف التشغيل بعد اعتماد المنطقة والطاقة اليومية.</span>
             </div>
             <div className="flex gap-3">
               <span className="font-num font-bold text-[#d8b25c]">04</span>
-              <span>تسعير واضح: المكونات بسعر السوق + مناولة 7% + أجر خدمة 200 دج/وجبة.</span>
+              <span>هيكل تكلفة قابل للتفصيل: مكونات + مناولة + خدمة + توصيل، وتُعتمد الأسعار الفعلية من الإدارة.</span>
             </div>
           </div>
         </div>
@@ -127,13 +132,6 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             className="w-full py-3.5 px-6 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
           >
             ابدأ الحاسبة العلمية
-          </button>
-          <button
-            type="button"
-            onClick={onFinish}
-            className="w-full py-3 px-6 rounded-xl font-bold text-sm text-[#f4f1e6] bg-[#1c2216] border border-[#2b3322] hover:border-[#d8b25c]/50 transition cursor-pointer"
-          >
-            دخول سريع بملف رياضي جاهز (82.4 كغ)
           </button>
         </div>
 
@@ -166,6 +164,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </p>
           </div>
 
+          <div className="rounded-xl border border-[#d4a24c]/25 bg-[#241e12]/60 px-3 py-2.5 text-[11px] leading-5 text-[#d8cba9]">
+            <strong className="text-[#e5cf94]">تنبيه الخصوصية:</strong>
+            بيانات القياسات وإجابات السلامة تُحفظ محلياً في هذا المتصفح فقط. لا توجد مزامنة أو حساب محمي في نسخة المعاينة؛ تجنب إدخال بيانات حساسة على جهاز مشترك.
+          </div>
+
           <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
             <label className="block text-xs font-semibold text-[#a8a493] mb-1.5">
               الاسم أو اللقب (يُطبع على العلبة)
@@ -182,7 +185,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               value={state.age}
               unit="سنة"
               step={1}
-              min={10}
+              min={18}
               max={100}
               onChange={(age) => onUpdate((prev) => ({ ...prev, age }))}
             />
@@ -232,6 +235,9 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               </div>
             </div>
           )}
+          {!state.name.trim() && (
+            <p className="text-[11px] text-[#d4a24c]">أدخل الاسم أو اللقب الذي سيظهر على ملفك قبل المتابعة.</p>
+          )}
 
           <div className="flex gap-2 pt-2">
             <button
@@ -244,7 +250,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </button>
             <button
               type="button"
-              disabled={Boolean(gateErr)}
+              disabled={Boolean(gateErr) || !state.name.trim()}
               onClick={() => setStep(2)}
               className="flex-1 py-3 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] disabled:opacity-40 cursor-pointer"
             >
@@ -257,6 +263,9 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       {step === 2 && (
         <div className="space-y-4">
           <h2 className="text-xl font-extrabold text-[#f4f1e6]">قياسات الجسم</h2>
+          <div className="rounded-xl border border-[#d4a24c]/25 bg-[#241e12]/60 px-3 py-2.5 text-[11px] leading-5 text-[#d8cba9]">
+            القيم الظاهرة مبدئياً أمثلة للمعاينة فقط. أدخل قياساتك الحقيقية قبل اعتماد أي نتيجة.
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             {(
@@ -327,15 +336,38 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               onChange={(lbm) => onUpdate((prev) => ({ ...prev, lbm }))}
             />
             {state.lbm > 0 && (
-              <Stepper
-                label="موثوقية القياس"
-                value={state.rel}
-                unit="%"
-                step={5}
-                min={0}
-                max={100}
-                onChange={(rel) => onUpdate((prev) => ({ ...prev, rel }))}
-              />
+              <>
+                <div className="mt-2">
+                  <label className="text-xs text-[#a8a493]">طريقة قياس LBM</label>
+                  <select
+                    value={state.lbmMethod ?? 'none'}
+                    onChange={(e) => onUpdate((prev) => ({
+                      ...prev,
+                      lbmMethod: e.target.value as 'none' | 'dexa' | 'inbody' | 'other',
+                    }))}
+                    className="mt-1 w-full rounded-xl border border-[#2b3322] bg-[#111411] px-3 py-2.5 text-xs text-[#f4f1e6]"
+                  >
+                    <option value="none">لم أحدد / غير موثق</option>
+                    <option value="dexa">DEXA</option>
+                    <option value="inbody">InBody</option>
+                    <option value="other">قياس آخر موثق</option>
+                  </select>
+                </div>
+                <Stepper
+                  label="موثوقية القياس"
+                  value={state.rel}
+                  unit="%"
+                  step={5}
+                  min={0}
+                  max={100}
+                  onChange={(rel) => onUpdate((prev) => ({ ...prev, rel }))}
+                />
+                {(!state.lbmMethod || state.lbmMethod === 'none' || state.rel < 70) && (
+                  <p className="text-[10px] leading-5 text-[#d4a24c]">
+                    ستُستخدم معادلة Mifflin حتى توثّق طريقة قياس LBM وتكون موثوقيتها 70% فأكثر.
+                  </p>
+                )}
+              </>
             )}
           </div>
 

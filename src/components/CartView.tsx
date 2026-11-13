@@ -18,6 +18,7 @@ import {
   round1,
 } from '../utils/nutrition';
 import { MealSlotsSummary } from './MealSlotsSummary';
+import { apiRequest } from '../services/api';
 import { CheckCircle2, Clock, Minus, Plus, Sparkles, Trash2 } from 'lucide-react';
 
 interface CartViewProps {
@@ -26,6 +27,8 @@ interface CartViewProps {
   onNavigate: (tab: AppTab) => void;
   onSelectMealSlot: (slotIdx: number) => void;
   onToast: (msg: string, undo?: () => void) => void;
+  apiEnabled?: boolean;
+  authToken?: string;
 }
 
 export const CartView: React.FC<CartViewProps> = ({
@@ -34,15 +37,17 @@ export const CartView: React.FC<CartViewProps> = ({
   onNavigate,
   onSelectMealSlot,
   onToast,
+  apiEnabled = false,
+  authToken,
 }) => {
   const [confirmModal, setConfirmModal] = useState<Order | null>(null);
   const res = calcNutrition(state);
   const totals = calcCartTotals(state);
   const pricingCfg = state.pricingConfig || DEFAULT_PRICING;
   const dlv = getNextDelivery(pricingCfg.cutoffHour);
-  const selectedZone = getSelectedZone(state);
   const activeZones = state.zones.filter((z) => z.active);
-  const zoneOptions = activeZones.length > 0 ? activeZones : state.zones;
+  const selectedZone = activeZones.find((z) => z.id === state.zoneId) ?? activeZones[0] ?? getSelectedZone(state);
+  const zoneOptions = activeZones;
   const pricing = calcCartPrice(totals.price, state.n, selectedZone.fee, pricingCfg);
 
   if (res.err) {
@@ -83,27 +88,102 @@ export const CartView: React.FC<CartViewProps> = ({
     });
   };
 
-  const handlePlaceOrder = () => {
+  const cancelOrder = async (order: Order) => {
+    if (apiEnabled) {
+      if (!authToken) { onToast('انتهت جلسة الدخول؛ سجّل الدخول مجدداً.'); return; }
+      try {
+        await apiRequest('/api/orders/' + order.id,authToken,{method:'DELETE'});
+      } catch (error) {
+        onToast(error instanceof Error ? error.message : 'تعذر إلغاء الطلب.');
+        return;
+      }
+    }
+    onUpdate((prev) => ({
+      ...prev,
+      ord: prev.ord.map((item) => item.id === order.id ? {...item,status:'X'} : item),
+    }));
+    onToast('تم إلغاء الطلب.');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!state.name.trim()) {
+      onToast('أدخل الاسم أو اللقب في ملفك قبل حفظ الطلب');
+      return;
+    }
+    if (activeZones.length === 0) {
+      onToast('لا توجد منطقة خدمة معتمدة بعد؛ لا يمكن حفظ طلب توصيل حتى يحددها المسؤول');
+      return;
+    }
+    if (!selectedZone.active) {
+      onToast('اختر منطقة خدمة معتمدة قبل المتابعة');
+      return;
+    }
+    if (state.meals.length === 0) {
+      onToast('السلة فارغة؛ أضف وجباتك أولاً');
+      return;
+    }
+
+    const emptySlot = Array.from({ length: state.n }, (_, slot) => slot).find(
+      (slot) => !state.meals.some((item) => clamp(item.slot || 0, 0, state.n - 1) === slot)
+    );
+    if (emptySlot !== undefined) {
+      onToast(`أكمل ${getMealSlotName(state, emptySlot)} قبل حفظ الطلب التجريبي`);
+      return;
+    }
+
     for (const m of state.meals) {
       if (m.kind === 'food') {
         const f = state.foods.find((x) => x.id === m.id);
-        if (f && f.available === false) {
+        if (!f) {
+          onToast('أحد المكونات لم يعد موجودًا في القائمة؛ احذفه ثم أعد اختياره');
+          return;
+        }
+        if (f.available === false) {
           onToast(`الصنف "${f.name}" لم يعد متوفرًا اليوم`);
           return;
         }
-        if (f && getBlockedAllergensForFood(f, state.al).length > 0) {
+        if (getBlockedAllergensForFood(f, state.al).length > 0) {
           onToast('تحتوي السلة على مكوّن يسبب لك حساسية');
           return;
         }
       } else if (m.kind === 'dish') {
         const d = state.dishes.find((x) => x.id === m.id);
-        if (d && d.available === false) {
+        if (!d) {
+          onToast('أحد الأطباق لم يعد موجودًا في القائمة؛ احذفه ثم أعد اختياره');
+          return;
+        }
+        if (d.available === false) {
           onToast(`الطبق "${d.name}" لم يعد متوفرًا اليوم`);
           return;
         }
-        if (d && getBlockedAllergensForDish(d, state.foods, state.al).length > 0) {
+        if (d.ing.some(([foodId]) => !state.foods.some((food) => food.id === foodId))) {
+          onToast('توجد مكونات ناقصة في أحد الأطباق؛ راجع قائمة الطعام');
+          return;
+        }
+        if (d.ing.some(([foodId]) => state.foods.find((food) => food.id === foodId)?.available === false)) {
+          onToast('أحد مكونات الطبق غير متوفر اليوم');
+          return;
+        }
+        if (getBlockedAllergensForDish(d, state.foods, state.al).length > 0) {
           onToast('تحتوي السلة على طبق يسبب لك حساسية');
           return;
+        }
+      } else {
+        const ingredients = m.ing || [];
+        if (ingredients.length === 0) {
+          onToast('توجد وجبة مخصصة بلا مكونات؛ أكملها أو احذفها');
+          return;
+        }
+        for (const [foodId] of ingredients) {
+          const food = state.foods.find((x) => x.id === foodId);
+          if (!food || food.available === false) {
+            onToast('توجد مكونات مخصصة غير متاحة؛ راجع الوجبة');
+            return;
+          }
+          if (getBlockedAllergensForFood(food, state.al).length > 0) {
+            onToast('تحتوي إحدى الوجبات المخصصة على مسبب حساسية مسجل لديك');
+            return;
+          }
         }
       }
     }
@@ -150,16 +230,72 @@ export const CartView: React.FC<CartViewProps> = ({
       c: round0(totals.c),
       f: round0(totals.f),
       status,
+      productionStage: status === 'C' ? 'queued' : undefined,
       items,
     };
 
+    let orderToSave = newOrder;
+    if (apiEnabled) {
+      if (!authToken) {
+        onToast('انتهت جلسة الدخول؛ سجّل الدخول مجدداً.');
+        return;
+      }
+      try {
+        const response = await apiRequest<{ order: {
+          id: string; order_number: string; delivery_date: string; order_status: string;
+          total_dzd: number | string; production_stage: Order['productionStage'];
+          delivery_fee_dzd: number | string; ingredient_cost_dzd: number | string;
+          handling_fee_dzd: number | string; service_fee_dzd: number | string;
+          kcal_total: number | string; protein_total: number | string; carbs_total: number | string; fat_total: number | string;
+        } }>('/api/orders', authToken, {
+          method: 'POST',
+          body: JSON.stringify({
+            zoneId: selectedZone.id,
+            mealCount: state.n,
+            note: state.orderNote.trim(),
+            items: state.meals.map((item) => ({
+              kind: item.kind,
+              id: item.id,
+              label: item.name,
+              grams: item.grams,
+              multiplier: item.mult ?? 1,
+              ingredients: item.kind === 'custom'
+                ? (item.ing ?? []).map(([foodId, grams]) => ({ foodId, grams }))
+                : undefined,
+              slot: clamp(item.slot || 0, 0, state.n - 1),
+              slotName: getMealSlotName(state, clamp(item.slot || 0, 0, state.n - 1)),
+            })),
+          }),
+        });
+        orderToSave = {
+          ...newOrder,
+          id: response.order.id,
+          date: String(response.order.delivery_date).slice(0, 10),
+          total: Number(response.order.total_dzd),
+          zoneFee: Number(response.order.delivery_fee_dzd),
+          ingCost: Number(response.order.ingredient_cost_dzd),
+          handling: Number(response.order.handling_fee_dzd),
+          service: Number(response.order.service_fee_dzd),
+          kcal: Number(response.order.kcal_total),
+          p: Number(response.order.protein_total),
+          c: Number(response.order.carbs_total),
+          f: Number(response.order.fat_total),
+          status: response.order.order_status === 'confirmed' ? 'C' : 'W',
+          productionStage: response.order.production_stage ?? undefined,
+        };
+      } catch (error) {
+        onToast(error instanceof Error ? error.message : 'تعذر إرسال الطلب إلى الخادم.');
+        return;
+      }
+    }
+
     onUpdate((prev) => ({
       ...prev,
-      ord: [...prev.ord, newOrder],
+      ord: [...prev.ord, orderToSave],
       meals: [],
       orderNote: '',
     }));
-    setConfirmModal(newOrder);
+    setConfirmModal(orderToSave);
   };
 
   const cutoffLabel = `${String(dlv.cutoffHour).padStart(2, '0')}:00`;
@@ -178,6 +314,12 @@ export const CartView: React.FC<CartViewProps> = ({
             توازن تلقائي
           </button>
         )}
+      </div>
+
+      <div className="rounded-xl border border-[#d4a24c]/30 bg-[#241e12]/70 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]" role="status">
+        <strong className="text-[#e5cf94]">نسخة معاينة:</strong>
+        يمكنك اختبار توزيع الوجبات والتكلفة وحفظ طلب تجريبي على هذا الجهاز فقط.
+        لا يُرسل الطلب إلى مطبخ فعلي ولا يحجز موعد توصيل.
       </div>
 
       {state.meals.length === 0 ? (
@@ -435,7 +577,11 @@ export const CartView: React.FC<CartViewProps> = ({
               <div>
                 <div className="text-sm font-bold text-[#f3f1ec] mb-2">منطقة التوصيل أو الاستلام</div>
                 <div className="space-y-2">
-                  {zoneOptions.map((z) => {
+                  {zoneOptions.length === 0 ? (
+                    <div className="rounded-xl border border-[#c45d51]/40 bg-[#241513] p-3 text-xs leading-6 text-[#e6b4aa]">
+                      لا توجد حالياً منطقة توصيل أو نقطة استلام معتمدة. يمكنك مواصلة معاينة الوجبات، لكن تأكيد الطلب متوقف حتى اعتماد نطاق الخدمة.
+                    </div>
+                  ) : zoneOptions.map((z) => {
                     const active = selectedZone.id === z.id;
                     return (
                       <button
@@ -513,14 +659,15 @@ export const CartView: React.FC<CartViewProps> = ({
               </div>
 
               <div className="text-[11px] text-[#9b988d]">
-                الدفع عند الاستلام · موعد التوصيل: <b className="text-[#f3f1ec]">{formatArabicDate(dlv.date)}</b>
+                <span className="text-[#d4a24c]">موعد تجريبي غير محجوز:</span> {formatArabicDate(dlv.date)}
                 {dlv.closedToday && ` (تم تجاوز ${cutoffLabel}، يُرحّل للغد التالي)`}
               </div>
 
               <button
                 type="button"
                 onClick={handlePlaceOrder}
-                className="w-full py-3.5 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e5cf94] to-[#c9a85c] hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
+                disabled={activeZones.length === 0}
+                className="w-full py-3.5 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e5cf94] to-[#c9a85c] hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
               >
                 تأكيد الطلب ({pricing.total} دج)
               </button>
@@ -559,24 +706,16 @@ export const CartView: React.FC<CartViewProps> = ({
                     }`}
                   >
                     {o.status === 'C'
-                      ? 'مؤكد — في دورة الطبخ المسائية'
+                      ? apiEnabled ? 'مؤكد لدى NutriFit · جارٍ متابعة التحضير' : 'مؤكد في سجل المعاينة المحلي'
                       : o.status === 'W'
-                        ? 'قائمة انتظار — الطاقة اليومية ممتلئة'
+                        ? apiEnabled ? 'قائمة انتظار · بانتظار اعتماد السعة' : 'قائمة انتظار تجريبية'
                         : 'ملغى'}
                   </div>
                 </div>
-                {o.status !== 'X' && (
+                {o.status !== 'X' && (!apiEnabled || !o.productionStage || o.productionStage === 'queued') && (
                   <button
                     type="button"
-                    onClick={() => {
-                      onUpdate((prev) => ({
-                        ...prev,
-                        ord: prev.ord.map((x) =>
-                          x.id === o.id ? { ...x, status: 'X' } : x
-                        ),
-                      }));
-                      onToast('تم إلغاء الطلب');
-                    }}
+                    onClick={() => void cancelOrder(o)}
                     className="px-3 py-1.5 rounded-lg border border-[#4a2b26] bg-[#1f1412] text-xs font-bold text-[#c45d51] cursor-pointer"
                   >
                     إلغاء
@@ -605,12 +744,18 @@ export const CartView: React.FC<CartViewProps> = ({
               )}
             </div>
             <h3 className="text-lg font-bold text-[#f3f1ec]">
-              {confirmModal.status === 'C' ? 'تم تأكيد طلبك ودخل الإنتاج' : 'تم إدراجك في قائمة الانتظار'}
+              {apiEnabled
+                ? confirmModal.status === 'C' ? 'تم تسجيل طلبك بنجاح' : 'تم تسجيل طلبك في قائمة الانتظار'
+                : confirmModal.status === 'C' ? 'تم حفظ طلب المعاينة' : 'تم حفظ طلب المعاينة في قائمة الانتظار'}
             </h3>
             <p className="text-xs text-[#9b988d] leading-relaxed">
-              {confirmModal.status === 'C'
-                ? `نشتري مكوناتك طازجة ونطبخ مساءً، ويصلك الطلب ${formatArabicDate(confirmModal.date)} (${confirmModal.zoneTitle}).`
-                : 'الطاقة اليومية للمطبخ مكتملة حاليًا. ستتلقى تأكيدًا فور توفر مكان.'}
+              {apiEnabled
+                ? confirmModal.status === 'C'
+                  ? 'تم تسجيل الطلب في قاعدة بيانات الخدمة. سيظهر لفريق التشغيل وفق السعة المعتمدة، وتبقى حالة الدفع نقداً عند الاستلام.'
+                  : 'سُجل الطلب في قائمة الانتظار على الخادم. لا يبدأ التحضير إلا بعد تأكيد الإدارة توفر السعة.'
+                : confirmModal.status === 'C'
+                  ? 'هذا سجل معاينة محفوظ على هذا الجهاز فقط؛ لم يُرسل إلى المطبخ ولم يُنشأ توصيل فعلي.'
+                  : 'هذه محاكاة محلية لقائمة الانتظار؛ لا توجد خدمة إرسال أو إشعارات للمطبخ.'}
             </p>
             <div className="bg-[#191d19] border border-[#262b24] rounded-xl p-3 text-xs flex justify-between tabular-nums">
               <span className="text-[#9b988d]">رقم الطلب: {confirmModal.id}</span>

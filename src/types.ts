@@ -31,6 +31,9 @@ export interface FoodItem {
   price: number; // DZD per 100g or 100ml
   al: AllergenKey[];
   available?: boolean;
+  nutritionDataStatus?: 'verified' | 'unverified';
+  nutritionBasis?: 'raw' | 'cooked' | 'as_sold' | 'unspecified';
+  nutritionSource?: string;
 }
 
 export interface DishItem {
@@ -98,6 +101,7 @@ export interface Order {
   c: number;
   f: number;
   status: 'C' | 'W' | 'X';
+  productionStage?: 'queued' | 'preparing' | 'packed' | 'out_for_delivery' | 'delivered';
   items: OrderItemSnapshot[];
 }
 
@@ -131,6 +135,7 @@ export interface AppState {
   targetWeight: number;
   lbm: number;
   rel: number;
+  lbmMethod?: 'none' | 'dexa' | 'inbody' | 'other';
   band: ActivityBand;
   pal: number;
   goal: GoalType;
