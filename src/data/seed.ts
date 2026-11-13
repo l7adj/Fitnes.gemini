@@ -32,14 +32,14 @@ export const ACTIVITY_BANDS: Record<
   A: {
     min: 1.7,
     max: 1.99,
-    def: 1.85,
+    def: 1.7,
     label: 'نشط',
     desc: 'حركة يومية وتدريب 3 إلى 5 أيام في الأسبوع',
   },
   V: {
     min: 2.0,
     max: 2.4,
-    def: 2.2,
+    def: 2.1,
     label: 'شديد',
     desc: 'عمل بدني شاق أو تدريب مكثف يوميًا',
   },
@@ -61,7 +61,7 @@ export const GOALS: Record<
     desc: 'فائض طاقة مدروس لدعم الاستشفاء والبناء العضلي',
     multLabel: '×1.10 (+10%)',
     pct: 10,
-    proteinPerKg: 1.9,
+    proteinPerKg: 1.8,
     targetRateKgWk: 0.25,
   },
   cut: {
@@ -69,7 +69,7 @@ export const GOALS: Record<
     desc: 'عجز طاقة منضبط مع بروتين مرتفع لحفظ الكتلة العضلية',
     multLabel: '×0.80 (−20%)',
     pct: -20,
-    proteinPerKg: 2.2,
+    proteinPerKg: 2.0,
     targetRateKgWk: -0.5,
   },
   recomp: {
@@ -77,7 +77,7 @@ export const GOALS: Record<
     desc: 'عجز خفيف لتحسين التركيبة الجسدية تدريجيًا',
     multLabel: '×0.90 (−10%)',
     pct: -10,
-    proteinPerKg: 1.8,
+    proteinPerKg: 1.6,
     targetRateKgWk: -0.15,
   },
   perf: {
@@ -85,7 +85,7 @@ export const GOALS: Record<
     desc: 'توازن سعرات لدعم الشدة البدنية والثبات الوزني',
     multLabel: '×1.00 (ثبات)',
     pct: 0,
-    proteinPerKg: 1.8,
+    proteinPerKg: 1.6,
     targetRateKgWk: 0,
   },
 };
