@@ -877,7 +877,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                                 onUpdate((prev) => ({
                                   ...prev,
                                   ord: prev.ord.map((x) =>
-                                    x.id === o.id ? { ...x, status: 'C', productionStage: 'queued' } : x
+                                    x.id === o.id ? { ...x, status: 'C', productionStage: 'queued' as const } : x
                                   ),
                                 }));
                                 onToast(`تم تأكيد الطلب ${o.id}`);
