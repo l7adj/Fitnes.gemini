@@ -3,7 +3,7 @@ import { GOALS, PICKUP_POINTS, QUALITY_CHARTER } from '../data/seed';
 import { AppState, AppTab } from '../types';
 import { calcNutrition, round1 } from '../utils/nutrition';
 import { EquationTable } from './EquationTable';
-import { Calculator, Download, MapPin, ShieldCheck, Sliders, Trash2 } from 'lucide-react';
+import { Calculator, Download, MapPin, ShieldCheck, Trash2 } from 'lucide-react';
 
 interface AccountViewProps {
   state: AppState;
@@ -46,7 +46,7 @@ export const AccountView: React.FC<AccountViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-[#f3f1ec]">الحساب والمطبخ</h1>
+      <h1 className="text-2xl font-bold text-[#f3f1ec]">الحساب والملف الغذائي</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Left: Profile + Scientific Calculator Equations */}
@@ -76,28 +76,6 @@ export const AccountView: React.FC<AccountViewProps> = ({
 
         {/* Right: Owner Workspace Entrance, Pickup Points, Charter, Market Bulletin & Data */}
         <div className="lg:col-span-5 space-y-4">
-          {/* Owner Workspace Entrance */}
-          <div className="bg-[#111411] border border-[#c9a85c]/50 rounded-2xl p-4 space-y-3">
-            <div>
-              <div className="text-sm font-bold text-[#e5cf94] flex items-center gap-1.5">
-                <Sliders className="w-4 h-4 text-[#c9a85c]" />
-                واجهة المالك الخاصة
-              </div>
-              <div className="text-xs text-[#9b988d] mt-1">
-                انتقل إلى لوحتك المستقلة لتعديل الأسعار، إضافة أطعمة وأطباق جديدة، وضبط مناطق التوصيل.
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                onUpdate((prev) => ({ ...prev, adminMode: true, tab: 'admin' }))
-              }
-              className="w-full py-2.5 rounded-xl font-bold text-xs text-[#141108] bg-gradient-to-l from-[#e5cf94] to-[#c9a85c] cursor-pointer"
-            >
-              فتح واجهة المالك والأسعار
-            </button>
-          </div>
-
           {/* Pickup Points */}
           <div className="bg-[#111411] border border-[#252823] rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-2 text-sm font-bold text-[#f3f1ec]">
@@ -137,12 +115,16 @@ export const AccountView: React.FC<AccountViewProps> = ({
             >
               <span className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#c9a85c]" />
-                ميثاق الجودة (10 بنود)
+                معايير الجودة المستهدفة (10 بنود)
               </span>
               <span className="text-xs text-[#c9a85c]">{showCharter ? 'إخفاء' : 'عرض'}</span>
             </button>
             {showCharter && (
-              <ol className="space-y-1.5 pt-2 border-t border-[#222520] text-xs text-[#9b988d]">
+              <>
+                <p className="pt-2 border-t border-[#222520] text-[11px] leading-5 text-[#d4a24c]">
+                  هذه معايير تشغيل مستهدفة؛ لا يعني ظهورها أن إجراءات المطبخ أو التبريد أو التتبع مطبقة فعلياً في نسخة المعاينة.
+                </p>
+                <ol className="space-y-1.5 text-xs text-[#9b988d]">
                 {QUALITY_CHARTER.map((item, idx) => (
                   <li key={idx} className="flex gap-2">
                     <span className="font-bold text-[#c9a85c] w-5 shrink-0 tabular-nums">
@@ -151,7 +133,8 @@ export const AccountView: React.FC<AccountViewProps> = ({
                     <span>{item}</span>
                   </li>
                 ))}
-              </ol>
+                </ol>
+              </>
             )}
           </div>
 
