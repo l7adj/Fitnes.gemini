@@ -247,7 +247,7 @@ export function createInitialState(): AppState {
   return {
     ver: STATE_VERSION,
     ob: 0,
-    name: 'رياضي الشراقة',
+    name: '',
     sex: 'm',
     age: 28,
     h: 178,
