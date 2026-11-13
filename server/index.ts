@@ -388,6 +388,35 @@ app.patch('/api/kitchen/orders/:id/stage', authRequired, requireRole('admin','ki
 }));
 
 
+app.get('/api/dishes', asyncRoute(async (_req,res) => {
+  const result = await pool.query(
+    "SELECT d.id,d.name_ar,d.description,COALESCE(json_agg(json_build_object('foodId',f.id,'name',f.name_ar,'grams',di.grams,'kcal',f.kcal_per_100,'protein',f.protein_per_100,'carbs',f.carbs_per_100,'fat',f.fat_per_100)) FILTER (WHERE f.id IS NOT NULL),'[]'::json) AS ingredients FROM dishes d JOIN dish_ingredients di ON di.dish_id=d.id JOIN foods f ON f.id=di.food_id WHERE d.active=true AND f.active=true AND f.nutrition_verified=true AND f.nutrition_basis<>'unspecified' GROUP BY d.id ORDER BY d.name_ar"
+  );
+  res.json({dishes:result.rows});
+}));
+
+app.get('/api/admin/settings', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
+  const result = await pool.query('SELECT handling_pct,service_fee_per_meal,cutoff_hour,daily_capacity_boxes,updated_at FROM pricing_config WHERE id=1');
+  res.json({settings:result.rows[0] ?? null});
+}));
+
+app.patch('/api/admin/settings', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const b = req.body ?? {};
+  const handling = bounded(b.handlingPct,0,100);
+  const service = bounded(b.serviceFeePerMeal,0,100000);
+  const cutoff = bounded(b.cutoffHour,8,23);
+  const capacity = bounded(b.dailyCapacityBoxes,0,10000);
+  if (handling === null || service === null || cutoff === null || capacity === null ||
+      !Number.isInteger(cutoff) || !Number.isInteger(capacity)) {
+    res.status(400).json({error:'إعدادات الأسعار أو الطاقة التشغيلية غير صالحة.'}); return;
+  }
+  const result = await pool.query(
+    'UPDATE pricing_config SET handling_pct=$1,service_fee_per_meal=$2,cutoff_hour=$3,daily_capacity_boxes=$4,updated_at=now() WHERE id=1 RETURNING handling_pct,service_fee_per_meal,cutoff_hour,daily_capacity_boxes,updated_at',
+    [handling,service,cutoff,capacity]
+  );
+  res.json({settings:result.rows[0]});
+}));
+
 app.get('/api/admin/foods', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
   const result = await pool.query('SELECT * FROM foods ORDER BY created_at DESC');
   res.json({foods:result.rows});
