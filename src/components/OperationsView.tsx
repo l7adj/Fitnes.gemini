@@ -153,6 +153,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
     });
   },'تم إسناد الطلب إلى حساب التوصيل.');
 
+  const confirmWaitlist = (order:any) => run(async () => {
+    await apiRequest('/api/admin/orders/'+order.id+'/confirm',session.token,{method:'POST'});
+  },'تم تأكيد الطلب بعد التحقق من السعة.');
+
   const field = (label:string,value:string,onChange:(value:string)=>void,type='text',placeholder='') => (
     <label className="block space-y-1">
       <span className="text-[11px] text-[#aaa79b]">{label}</span>
@@ -232,17 +236,20 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
                 )}
                 {isDelivery && (
                   <div className="flex items-center justify-between border-t border-[#292d25] pt-3 text-xs">
-                    <span className="text-[#aaa79b]">التسليم إلى العميل</span>
-                    <button onClick={()=>void updateStage(order,'delivered')} disabled={busy || order.production_stage==='delivered'}
-                      className="rounded-lg bg-[#c9a85c] px-4 py-2 font-bold text-[#17140d] disabled:opacity-40">تأكيد التسليم</button>
+                    <span className="text-[#aaa79b]">{order.production_stage==='packed'?'استلام الطلب من المطبخ':order.production_stage==='out_for_delivery'?'تسليم الطلب للعميل':'بانتظار تجهيز المطبخ'}</span>
+                    {order.production_stage==='packed' && <button onClick={()=>void updateStage(order,'out_for_delivery')} disabled={busy} className="rounded-lg bg-[#c9a85c] px-4 py-2 font-bold text-[#17140d] disabled:opacity-40">بدء التوصيل</button>}
+                    {order.production_stage==='out_for_delivery' && <button onClick={()=>void updateStage(order,'delivered')} disabled={busy} className="rounded-lg bg-[#c9a85c] px-4 py-2 font-bold text-[#17140d] disabled:opacity-40">تأكيد التسليم</button>}
                   </div>
                 )}
                 {isAdmin && (
                   <div className="flex flex-wrap gap-2 border-t border-[#292d25] pt-3">
-                    <input value={driverIds[order.id]??''} onChange={(e)=>setDriverIds((prev)=>({...prev,[order.id]:e.target.value}))}
-                      placeholder="معرّف حساب الموصّل (UUID)" className="min-w-0 flex-1 rounded-lg border border-[#34372e] bg-[#0c100d] px-3 py-2 text-[11px]"/>
-                    <button onClick={()=>void assignDriver(order)} disabled={busy || !driverIds[order.id]}
-                      className="rounded-lg border border-[#c9a85c]/40 px-3 py-2 text-[11px] text-[#e5cf94] disabled:opacity-40">إسناد التوصيل</button>
+                    {order.order_status==='waitlisted' && <button onClick={()=>void confirmWaitlist(order)} disabled={busy} className="rounded-lg bg-[#c9a85c] px-3 py-2 text-[11px] font-bold text-[#17140d] disabled:opacity-40">تأكيد من قائمة الانتظار</button>}
+                    {order.order_status==='confirmed' && <>
+                      <input value={driverIds[order.id]??''} onChange={(e)=>setDriverIds((prev)=>({...prev,[order.id]:e.target.value}))}
+                        placeholder="معرّف حساب الموصّل (UUID)" className="min-w-0 flex-1 rounded-lg border border-[#34372e] bg-[#0c100d] px-3 py-2 text-[11px]"/>
+                      <button onClick={()=>void assignDriver(order)} disabled={busy || !driverIds[order.id]}
+                        className="rounded-lg border border-[#c9a85c]/40 px-3 py-2 text-[11px] text-[#e5cf94] disabled:opacity-40">إسناد التوصيل</button>
+                    </>}
                   </div>
                 )}
               </article>
@@ -275,6 +282,17 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
               </label>
               {field('المصدر ورقم السجل',food.nutritionSource,(v)=>setFood({...food,nutritionSource:v}),'text','USDA FDC · ID')}
               {field('معرّف المصدر (إن توفر)',food.sourceRecordId,(v)=>setFood({...food,sourceRecordId:v}))}
+              <div className="space-y-2">
+                <div className="text-[11px] text-[#aaa79b]">مسببات الحساسية الموجودة</div>
+                <div className="flex flex-wrap gap-3 text-[11px]">
+                  {(['gluten','eggs','fish','milk','nuts'] as string[]).map((key)=>(
+                    <label key={key} className="flex items-center gap-1.5">
+                      <input type="checkbox" checked={food.allergens.includes(key)} onChange={(e)=>setFood({...food,allergens:e.target.checked?[...food.allergens,key]:food.allergens.filter((x:string)=>x!==key)})}/>
+                      {{gluten:'غلوتين',eggs:'بيض',fish:'سمك',milk:'حليب',nuts:'مكسرات'} as Record<string,string>}[key]
+                    </label>
+                  ))}
+                </div>
+              </div>
               <button disabled={busy} className="w-full rounded-xl bg-[#c9a85c] py-3 text-xs font-extrabold text-[#17140d] disabled:opacity-40"><Plus className="ml-1 inline h-4 w-4"/>حفظ كمسودة غير موثقة</button>
             </form>
             <div className="space-y-2">
