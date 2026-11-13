@@ -119,7 +119,7 @@ export const DEFAULT_ZONES: DeliveryZone[] = [
     id: 'z2',
     title: 'منطقة توصيل تجريبية 2',
     areas: 'نطاق جغرافي غير معتمد',
-    hours: '07:00 – 08:30 صباحًا',
+    hours: 'نافذة توصيل تجريبية',
     fee: 300,
     active: false,
   },
@@ -170,8 +170,8 @@ export const PICKUP_POINTS = [
   {
     name: 'نقطة استلام شريكة إضافية (مقترحة)',
     area: 'موقع الشريك — يُحدد لاحقًا',
-    hours: '07:00 – 09:00 صباحًا',
-    status: 'قريبًا — المرحلة 4',
+    hours: 'التوقيت — يُحدد لاحقًا',
+    status: 'مقترحة — غير معتمدة',
     active: false,
   },
 ];
