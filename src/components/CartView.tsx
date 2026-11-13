@@ -122,6 +122,14 @@ export const CartView: React.FC<CartViewProps> = ({
           onToast(`الطبق "${d.name}" لم يعد متوفرًا اليوم`);
           return;
         }
+        if (d.ing.some(([foodId]) => !state.foods.some((food) => food.id === foodId))) {
+          onToast('توجد مكونات ناقصة في أحد الأطباق؛ راجع قائمة الطعام');
+          return;
+        }
+        if (d.ing.some(([foodId]) => state.foods.find((food) => food.id === foodId)?.available === false)) {
+          onToast('أحد مكونات الطبق غير متوفر اليوم');
+          return;
+        }
         if (getBlockedAllergensForDish(d, state.foods, state.al).length > 0) {
           onToast('تحتوي السلة على طبق يسبب لك حساسية');
           return;
