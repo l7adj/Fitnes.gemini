@@ -72,11 +72,12 @@ export default function App() {
   const [sessionReady, setSessionReady] = useState(!API_ENABLED);
 
   const hydrateRemoteWorkspace = async (token: string, user: ApiUser) => {
-    const [profileResponse, foodsResponse, dishesResponse, zonesResponse] = await Promise.all([
+    const [profileResponse, foodsResponse, dishesResponse, zonesResponse, ordersResponse] = await Promise.all([
       apiRequest<{ profile: any }>('/api/profile', token),
       apiRequest<{ foods: any[] }>('/api/foods', token),
       apiRequest<{ dishes: any[] }>('/api/dishes', token),
       apiRequest<{ zones: any[] }>('/api/zones', token),
+      apiRequest<{ orders: any[] }>('/api/orders', token),
     ]);
     const profile = profileResponse.profile;
     const foods = foodsResponse.foods.map((food) => ({
@@ -107,6 +108,34 @@ export default function App() {
       id: zone.id, title: zone.title, areas: zone.areas, hours: zone.service_hours,
       fee: Number(zone.fee_dzd), active: true,
     }));
+    const orders = ordersResponse.orders.map((order) => ({
+      id: order.id,
+      createdAt: order.created_at,
+      date: String(order.delivery_date).slice(0,10),
+      n: Number(order.meal_count),
+      zoneTitle: order.delivery_zone_title,
+      zoneFee: Number(order.delivery_fee_dzd),
+      note: order.customer_note ?? '',
+      ingCost: Number(order.ingredient_cost_dzd),
+      handling: Number(order.handling_fee_dzd),
+      service: Number(order.service_fee_dzd),
+      total: Number(order.total_dzd),
+      kcal: Number(order.kcal_total),
+      p: Number(order.protein_total),
+      c: Number(order.carbs_total),
+      f: Number(order.fat_total),
+      status: order.order_status === 'confirmed' ? 'C' as const : order.order_status === 'waitlisted' ? 'W' as const : 'X' as const,
+      productionStage: order.production_stage ?? undefined,
+      items: (order.items ?? []).map((item: any) => ({
+        label: item.label,
+        grams: Number(item.grams),
+        kcal: Number(item.kcal),
+        p: Number(item.protein),
+        slot: Number(item.slot),
+        slotName: item.slot_name,
+        rawIngredients: [],
+      })),
+    }));
     const hasProfile = Boolean(profile?.age);
     setState((prev) => ({
       ...prev,
@@ -130,7 +159,7 @@ export default function App() {
       zones,
       zoneId: zones[0]?.id ?? '',
       meals: [],
-      ord: [],
+      ord: orders,
       jr: [],
       photos: [],
       ob: hasProfile ? 6 : 0,
