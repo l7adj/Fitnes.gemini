@@ -39,12 +39,10 @@
 التسجيل العام ينشئ حساب customer فقط. لا توجد واجهة عامة تمنح صلاحية الإدارة.
 
 1. أنشئ حساباً عادياً من شاشة التسجيل.
-2. نفّذ من اتصال PostgreSQL موثوق، بعد التحقق من البريد المقصود:
+2. شغّل أمر الترقية من بيئة الخادم الموثوقة بعد التحقق من البريد المقصود:
 
-   ~~~sql
-   UPDATE app_users
-   SET role = 'admin'
-   WHERE email = 'ADMIN_EMAIL_HERE';
+   ~~~bash
+   BOOTSTRAP_ADMIN_EMAIL=admin@example.com npm run admin:promote
    ~~~
 
 3. سجّل الخروج ثم الدخول مجدداً حتى يصدر JWT بالدور الجديد.
