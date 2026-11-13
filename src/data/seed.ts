@@ -127,7 +127,7 @@ export const DEFAULT_ZONES: DeliveryZone[] = [
     id: 'z3',
     title: 'منطقة توصيل تجريبية 3',
     areas: 'نطاق جغرافي غير معتمد',
-    hours: '07:00 – 08:30 صباحًا',
+    hours: 'التوقيت — يُحدد لاحقًا',
     fee: 500,
     active: false,
   },
