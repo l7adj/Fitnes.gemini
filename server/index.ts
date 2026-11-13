@@ -147,7 +147,7 @@ app.get('/api/zones', asyncRoute(async (_req,res) => {
 app.get('/api/profile', authRequired, asyncRoute(async (req,res) => {
   const auth = (req as AuthRequest).auth!;
   const result = await pool.query(
-    'SELECT u.id,u.name,u.email,u.allergens,p.sex,p.age,p.height_cm,p.weight_kg,p.target_weight_kg,p.activity_band,p.pal,p.goal,p.goal_adjustment_pct,p.health_flags,p.profile_version FROM app_users u LEFT JOIN customer_profiles p ON p.user_id=u.id WHERE u.id=$1',
+    'SELECT u.id,u.name,u.email,u.allergens,p.sex,p.age,p.height_cm,p.weight_kg,p.target_weight_kg,p.activity_band,p.pal,p.goal,p.goal_adjustment_pct,p.health_flags,p.lbm_kg,p.lbm_reliability_pct,p.lbm_method,p.profile_version FROM app_users u LEFT JOIN customer_profiles p ON p.user_id=u.id WHERE u.id=$1',
     [auth.id]
   );
   res.json({ profile:result.rows[0] ?? null });
@@ -170,8 +170,13 @@ app.put('/api/profile', authRequired, requireRole('customer'), asyncRoute(async 
   const palValid = Boolean(band && pal !== null && pal >= palRanges[band][0] && pal <= palRanges[band][1]);
   const goal = ['bulk','cut','recomp','perf'].includes(b.goal) ? b.goal : null;
   const adjustment = bounded(b.goalAdjustmentPct,-25,25);
+  const lbm = b.lbmKg === null || b.lbmKg === undefined || Number(b.lbmKg) === 0 ? null : bounded(b.lbmKg,1,300);
+  const reliability = b.lbmReliabilityPct === null || b.lbmReliabilityPct === undefined ? null : bounded(b.lbmReliabilityPct,0,100);
+  const lbmMethod = ['none','dexa','inbody','other'].includes(b.lbmMethod) ? b.lbmMethod : 'none';
   if (!sex || age === null || height === null || weight === null || target === null ||
-      !band || pal === null || !palValid || !goal || adjustment === null) {
+      !band || pal === null || !palValid || !goal || adjustment === null ||
+      (b.lbmKg !== null && b.lbmKg !== undefined && Number(b.lbmKg) !== 0 && lbm === null) ||
+      (lbm !== null && (lbm > weight || reliability === null || lbmMethod === 'none'))) {
     res.status(400).json({ error:'بيانات الملف ناقصة أو خارج الحدود.' }); return;
   }
   const client = await pool.connect();
@@ -179,8 +184,8 @@ app.put('/api/profile', authRequired, requireRole('customer'), asyncRoute(async 
     await client.query('BEGIN');
     await client.query('UPDATE app_users SET allergens=$1 WHERE id=$2',[allergens,auth.id]);
     await client.query(
-      'INSERT INTO customer_profiles (user_id,sex,age,height_cm,weight_kg,target_weight_kg,activity_band,pal,goal,goal_adjustment_pct,health_flags) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (user_id) DO UPDATE SET sex=EXCLUDED.sex,age=EXCLUDED.age,height_cm=EXCLUDED.height_cm,weight_kg=EXCLUDED.weight_kg,target_weight_kg=EXCLUDED.target_weight_kg,activity_band=EXCLUDED.activity_band,pal=EXCLUDED.pal,goal=EXCLUDED.goal,goal_adjustment_pct=EXCLUDED.goal_adjustment_pct,health_flags=EXCLUDED.health_flags,profile_version=customer_profiles.profile_version+1,updated_at=now()',
-      [auth.id,sex,age,height,weight,target,band,pal,goal,adjustment,JSON.stringify(b.healthFlags ?? {})]
+      'INSERT INTO customer_profiles (user_id,sex,age,height_cm,weight_kg,target_weight_kg,activity_band,pal,goal,goal_adjustment_pct,health_flags,lbm_kg,lbm_reliability_pct,lbm_method) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (user_id) DO UPDATE SET sex=EXCLUDED.sex,age=EXCLUDED.age,height_cm=EXCLUDED.height_cm,weight_kg=EXCLUDED.weight_kg,target_weight_kg=EXCLUDED.target_weight_kg,activity_band=EXCLUDED.activity_band,pal=EXCLUDED.pal,goal=EXCLUDED.goal,goal_adjustment_pct=EXCLUDED.goal_adjustment_pct,health_flags=EXCLUDED.health_flags,lbm_kg=EXCLUDED.lbm_kg,lbm_reliability_pct=EXCLUDED.lbm_reliability_pct,lbm_method=EXCLUDED.lbm_method,profile_version=customer_profiles.profile_version+1,updated_at=now()',
+      [auth.id,sex,age,height,weight,target,band,pal,goal,adjustment,JSON.stringify(b.healthFlags ?? {}),lbm,reliability,lbmMethod]
     );
     await audit(client,auth.id,'profile.updated','customer_profile',auth.id);
     await client.query('COMMIT');
