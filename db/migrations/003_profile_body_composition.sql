@@ -20,3 +20,9 @@ ALTER TABLE customer_profiles
 ALTER TABLE customer_profiles
   ADD CONSTRAINT customer_profiles_lbm_reliability_pct_check
   CHECK (lbm_reliability_pct IS NULL OR lbm_reliability_pct BETWEEN 0 AND 100);
+
+ALTER TABLE customer_profiles
+  DROP CONSTRAINT IF EXISTS customer_profile_lbm_not_above_weight;
+ALTER TABLE customer_profiles
+  ADD CONSTRAINT customer_profile_lbm_not_above_weight
+  CHECK (lbm_kg IS NULL OR weight_kg IS NULL OR lbm_kg <= weight_kg);
