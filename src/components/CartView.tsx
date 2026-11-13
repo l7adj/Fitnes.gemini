@@ -188,6 +188,7 @@ export const CartView: React.FC<CartViewProps> = ({
       c: round0(totals.c),
       f: round0(totals.f),
       status,
+      productionStage: status === 'C' ? 'queued' : undefined,
       items,
     };
 
