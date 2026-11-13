@@ -170,13 +170,14 @@ app.put('/api/profile', authRequired, requireRole('customer'), asyncRoute(async 
   const palValid = Boolean(band && pal !== null && pal >= palRanges[band][0] && pal <= palRanges[band][1]);
   const goal = ['bulk','cut','recomp','perf'].includes(b.goal) ? b.goal : null;
   const adjustment = bounded(b.goalAdjustmentPct,-25,25);
-  const lbm = b.lbmKg === null || b.lbmKg === undefined || Number(b.lbmKg) === 0 ? null : bounded(b.lbmKg,1,300);
+  const rawLbm = b.lbmKg === null || b.lbmKg === undefined || Number(b.lbmKg) === 0 ? null : bounded(b.lbmKg,1,300);
   const reliability = b.lbmReliabilityPct === null || b.lbmReliabilityPct === undefined ? null : bounded(b.lbmReliabilityPct,0,100);
   const lbmMethod = ['none','dexa','inbody','other'].includes(b.lbmMethod) ? b.lbmMethod : 'none';
+  const lbm = rawLbm !== null && reliability !== null && reliability >= 70 && lbmMethod !== 'none' ? rawLbm : null;
   if (!sex || age === null || height === null || weight === null || target === null ||
       !band || pal === null || !palValid || !goal || adjustment === null ||
-      (b.lbmKg !== null && b.lbmKg !== undefined && Number(b.lbmKg) !== 0 && lbm === null) ||
-      (lbm !== null && (lbm > weight || reliability === null || lbmMethod === 'none'))) {
+      (b.lbmKg !== null && b.lbmKg !== undefined && Number(b.lbmKg) !== 0 && rawLbm === null) ||
+      (rawLbm !== null && rawLbm > weight)) {
     res.status(400).json({ error:'بيانات الملف ناقصة أو خارج الحدود.' }); return;
   }
   const client = await pool.connect();
