@@ -369,6 +369,36 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
   } finally { client.release(); }
 }));
 
+app.delete('/api/orders/:id', authRequired, requireRole('customer'), asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query(
+      "SELECT id,order_status,production_stage FROM customer_orders WHERE id=$1 AND customer_id=$2 FOR UPDATE",
+      [req.params.id,auth.id]
+    );
+    if (!found.rowCount) {
+      await client.query('ROLLBACK');
+      res.status(404).json({error:'الطلب غير موجود في حسابك.'}); return;
+    }
+    const order = found.rows[0];
+    if (!['confirmed','waitlisted'].includes(order.order_status) ||
+        (order.production_stage && order.production_stage !== 'queued')) {
+      await client.query('ROLLBACK');
+      res.status(409).json({error:'بدأ تجهيز الطلب أو لم يعد قابلاً للإلغاء من الحساب. تواصل مع خدمة العملاء.'}); return;
+    }
+    await client.query(
+      "UPDATE customer_orders SET order_status='cancelled',production_stage=NULL,updated_at=now() WHERE id=$1",
+      [order.id]
+    );
+    await audit(client,auth.id,'order.cancelled','customer_order',order.id);
+    await client.query('COMMIT');
+    res.json({cancelled:true,id:order.id});
+  } catch (error) { await client.query('ROLLBACK'); throw error; }
+  finally { client.release(); }
+}));
+
 app.get('/api/orders', authRequired, requireRole('customer'), asyncRoute(async (req,res) => {
   const auth = (req as AuthRequest).auth!;
   const result = await pool.query(
