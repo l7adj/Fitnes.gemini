@@ -30,6 +30,9 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStart }) => (
           <span className="mt-0.5 block text-[9px] tracking-[.28em] text-[#9e967f]">PRIVATE NUTRITION · DZ</span>
         </span>
       </a>
+      <div className="absolute top-[5.6rem] right-5 z-20 rounded-full border border-[#d4a24c]/30 bg-[#241e12]/90 px-3 py-1.5 text-[10px] text-[#e5cf94] sm:right-8 lg:right-12">
+        نسخة معاينة تفاعلية · لا تستقبل طلبات فعلية
+      </div>
       <div className="hidden items-center gap-7 text-[12px] text-[#b8b4a8] md:flex">
         <a href="#method" className="transition hover:text-[#e4d1a2]">منهجيتنا</a>
         <a href="#experience" className="transition hover:text-[#e4d1a2]">التجربة</a>
