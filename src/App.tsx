@@ -172,6 +172,7 @@ export default function App() {
 
   const handleAuthenticated = async (nextSession: ApiSession) => {
     localStorage.setItem('nf_auth_token', nextSession.token);
+    setSessionReady(false);
     setSession(nextSession);
     try {
       await hydrateRemoteWorkspace(nextSession.token, nextSession.user);
@@ -234,6 +235,25 @@ export default function App() {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, undo ? 5000 : 2500);
   };
+
+  useEffect(() => {
+    if (!API_ENABLED || !session || session.user.role !== 'customer' || state.ob < 6) return;
+    const timeout = window.setTimeout(() => {
+      void apiRequest('/api/profile', session.token, {
+        method: 'PUT',
+        body: JSON.stringify({
+          sex: state.sex, age: state.age, heightCm: state.h, weightKg: state.w,
+          targetWeightKg: state.targetWeight, lbmKg: state.lbm,
+          lbmReliabilityPct: state.rel, lbmMethod: state.lbmMethod ?? 'none',
+          activityBand: state.band, pal: state.pal, goal: state.goal,
+          goalAdjustmentPct: state.pct, allergens: state.al, healthFlags: state.fl,
+        }),
+      }).catch((error) => showToast(error instanceof Error ? error.message : 'تعذر مزامنة الملف الصحي.'));
+    }, 700);
+    return () => window.clearTimeout(timeout);
+  }, [API_ENABLED, session?.token, session?.user.role, state.ob, state.sex, state.age, state.h, state.w,
+      state.targetWeight, state.lbm, state.rel, state.lbmMethod, state.band, state.pal, state.goal,
+      state.pct, state.al.join(','), state.fl.preg, state.fl.kid, state.fl.dia, state.fl.ed]);
 
   const navigate = (tab: AppTab) => {
     setPickerRequest(null);
