@@ -337,7 +337,7 @@ app.get('/api/orders', authRequired, requireRole('customer'), asyncRoute(async (
   res.json({ orders:result.rows.map((order) => ({...order,items:grouped.get(order.id) ?? []})) });
 }));
 
-app.get('/api/kitchen/orders', authRequired, requireRole('admin','kitchen','delivery'), asyncRoute(async (req,res) => {
+app.get('/api/kitchen/orders', authRequired, requireRole('admin','kitchen'), asyncRoute(async (req,res) => {
   const date = cleanText(req.query.date,10,10);
   const params: unknown[] = [];
   let where = "WHERE o.order_status='confirmed'";
@@ -370,7 +370,10 @@ app.patch('/api/kitchen/orders/:id/stage', authRequired, requireRole('admin','ki
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const found = await client.query("SELECT id,production_stage FROM customer_orders WHERE id=$1 AND order_status='confirmed' FOR UPDATE",[req.params.id]);
+    const found = await client.query(
+      "SELECT id,production_stage FROM customer_orders WHERE id=$1 AND order_status='confirmed' AND ($2 <> 'delivery' OR delivery_user_id=$3) FOR UPDATE",
+      [req.params.id,auth.role,auth.id]
+    );
     if (!found.rowCount) { await client.query('ROLLBACK'); res.status(404).json({error:'الطلب غير موجود.'}); return; }
     const current = found.rows[0].production_stage ?? 'queued';
     if (stages.indexOf(stage) < stages.indexOf(current)) {
@@ -382,6 +385,129 @@ app.patch('/api/kitchen/orders/:id/stage', authRequired, requireRole('admin','ki
     res.json({updated:true,stage});
   } catch (error) { await client.query('ROLLBACK'); throw error; }
   finally { client.release(); }
+}));
+
+
+app.get('/api/admin/foods', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
+  const result = await pool.query('SELECT * FROM foods ORDER BY created_at DESC');
+  res.json({foods:result.rows});
+}));
+
+app.patch('/api/admin/foods/:id/active', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const active = req.body?.active;
+  if (typeof active !== 'boolean') { res.status(400).json({error:'قيمة التفعيل غير صالحة.'}); return; }
+  const result = await pool.query(
+    "UPDATE foods SET active=$1,updated_at=now() WHERE id=$2 AND ($1=false OR (nutrition_verified=true AND nutrition_basis<>'unspecified' AND length(trim(coalesce(nutrition_source,'')))>0)) RETURNING id,active",
+    [active,req.params.id]
+  );
+  if (!result.rowCount) { res.status(409).json({error:'لا يمكن تفعيل عنصر غير موجود أو غير موثق غذائياً.'}); return; }
+  res.json({food:result.rows[0]});
+}));
+
+app.post('/api/admin/dishes', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const name = cleanText(req.body?.name,2,160);
+  const ingredients = req.body?.ingredients;
+  if (!name || !Array.isArray(ingredients) || ingredients.length < 1 || ingredients.length > 30) {
+    res.status(400).json({error:'اسم الطبق ومكوّناته مطلوبة.'}); return;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const dish = await client.query('INSERT INTO dishes (name_ar,description,active) VALUES ($1,$2,false) RETURNING id,name_ar,active',[name,cleanText(req.body?.description ?? '',0,500)]);
+    for (const item of ingredients) {
+      const grams = bounded(item?.grams,1,2000);
+      if (!grams || !cleanText(item?.foodId,1,80)) throw new Error('INVALID_DISH_INGREDIENT');
+      const food = await client.query(
+        "SELECT id FROM foods WHERE id=$1 AND active=true AND nutrition_verified=true AND nutrition_basis<>'unspecified' AND length(trim(coalesce(nutrition_source,'')))>0",
+        [item.foodId]
+      );
+      if (!food.rowCount) throw new Error('DISH_FOOD_UNVERIFIED');
+      await client.query('INSERT INTO dish_ingredients (dish_id,food_id,grams) VALUES ($1,$2,$3)',[dish.rows[0].id,item.foodId,grams]);
+    }
+    await audit(client,(req as AuthRequest).auth!.id,'dish.created','dish',dish.rows[0].id);
+    await client.query('COMMIT');
+    res.status(201).json({dish:dish.rows[0],note:'الطبق غير نشط حتى مراجعته وتفعيله.'});
+  } catch (error:any) {
+    await client.query('ROLLBACK');
+    if (error?.message === 'INVALID_DISH_INGREDIENT') { res.status(400).json({error:'أحد مكونات الطبق أو أوزانه غير صالح.'}); return; }
+    if (error?.message === 'DISH_FOOD_UNVERIFIED') { res.status(409).json({error:'لا يمكن بناء وصفة من مكوّن غير موثق أو غير نشط.'}); return; }
+    throw error;
+  } finally { client.release(); }
+}));
+
+app.patch('/api/admin/dishes/:id/active', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const active = req.body?.active;
+  if (typeof active !== 'boolean') { res.status(400).json({error:'قيمة التفعيل غير صالحة.'}); return; }
+  if (active) {
+    const check = await pool.query(
+      "SELECT count(*)::int AS total,count(*) FILTER (WHERE f.active=true AND f.nutrition_verified=true AND f.nutrition_basis<>'unspecified' AND length(trim(coalesce(f.nutrition_source,'')))>0)::int AS valid FROM dish_ingredients di JOIN foods f ON f.id=di.food_id WHERE di.dish_id=$1",
+      [req.params.id]
+    );
+    if (!check.rows[0] || Number(check.rows[0].total) < 1 || Number(check.rows[0].total) !== Number(check.rows[0].valid)) {
+      res.status(409).json({error:'لا يمكن تفعيل وصفة بلا مكونات موثقة ونشطة.'}); return;
+    }
+  }
+  const result = await pool.query('UPDATE dishes SET active=$1 WHERE id=$2 RETURNING id,active',[active,req.params.id]);
+  if (!result.rowCount) { res.status(404).json({error:'الطبق غير موجود.'}); return; }
+  res.json({dish:result.rows[0]});
+}));
+
+app.post('/api/admin/zones', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const title = cleanText(req.body?.title,2,120);
+  const areas = cleanText(req.body?.areas,2,500);
+  const hours = cleanText(req.body?.serviceHours,2,120);
+  const fee = bounded(req.body?.feeDzd,0,100000);
+  if (!title || !areas || !hours || fee === null) { res.status(400).json({error:'اسم المنطقة والأحياء وساعات الخدمة والرسوم مطلوبة.'}); return; }
+  const result = await pool.query(
+    'INSERT INTO delivery_zones (title,areas,service_hours,fee_dzd,active) VALUES ($1,$2,$3,$4,false) RETURNING *',
+    [title,areas,hours,fee]
+  );
+  res.status(201).json({zone:result.rows[0],note:'أضيفت المنطقة متوقفة. فعّلها بعد اعتماد التغطية.'});
+}));
+
+app.patch('/api/admin/zones/:id', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const b = req.body ?? {};
+  const current = await pool.query('SELECT * FROM delivery_zones WHERE id=$1',[req.params.id]);
+  if (!current.rowCount) { res.status(404).json({error:'المنطقة غير موجودة.'}); return; }
+  const old = current.rows[0];
+  const title = b.title === undefined ? old.title : cleanText(b.title,2,120);
+  const areas = b.areas === undefined ? old.areas : cleanText(b.areas,2,500);
+  const hours = b.serviceHours === undefined ? old.service_hours : cleanText(b.serviceHours,2,120);
+  const fee = b.feeDzd === undefined ? Number(old.fee_dzd) : bounded(b.feeDzd,0,100000);
+  const active = b.active === undefined ? old.active : b.active;
+  if (!title || !areas || !hours || fee === null || typeof active !== 'boolean') {
+    res.status(400).json({error:'بيانات المنطقة غير صالحة.'}); return;
+  }
+  if (active && (areas.includes('غير معتمد') || hours.includes('تجريبي') || hours.includes('يُحدد'))) {
+    res.status(409).json({error:'لا يمكن تفعيل نطاق تغطية تجريبي أو غير معتمد.'}); return;
+  }
+  const result = await pool.query(
+    'UPDATE delivery_zones SET title=$1,areas=$2,service_hours=$3,fee_dzd=$4,active=$5 WHERE id=$6 RETURNING *',
+    [title,areas,hours,fee,active,req.params.id]
+  );
+  res.json({zone:result.rows[0]});
+}));
+
+app.post('/api/admin/orders/:id/assign-delivery', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const deliveryUserId = cleanText(req.body?.deliveryUserId,1,80);
+  if (!deliveryUserId) { res.status(400).json({error:'معرّف حساب التوصيل مطلوب.'}); return; }
+  const driver = await pool.query("SELECT id FROM app_users WHERE id=$1 AND role='delivery'",[deliveryUserId]);
+  if (!driver.rowCount) { res.status(404).json({error:'حساب التوصيل غير موجود.'}); return; }
+  const result = await pool.query(
+    "UPDATE customer_orders SET delivery_user_id=$1,updated_at=now() WHERE id=$2 AND order_status='confirmed' RETURNING id,delivery_user_id",
+    [deliveryUserId,req.params.id]
+  );
+  if (!result.rowCount) { res.status(404).json({error:'الطلب غير موجود أو غير مؤكد.'}); return; }
+  res.json({assignment:result.rows[0]});
+}));
+
+app.get('/api/delivery/orders', authRequired, requireRole('delivery'), asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const result = await pool.query(
+    "SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.production_stage,u.name AS customer_name FROM customer_orders o JOIN app_users u ON u.id=o.customer_id WHERE o.delivery_user_id=$1 AND o.order_status='confirmed' ORDER BY o.delivery_date,o.created_at",
+    [auth.id]
+  );
+  res.json({orders:result.rows});
 }));
 
 app.use('/api',(_req,res) => res.status(404).json({error:'مسار API غير موجود.'}));
