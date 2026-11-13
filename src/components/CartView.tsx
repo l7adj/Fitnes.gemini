@@ -84,26 +84,64 @@ export const CartView: React.FC<CartViewProps> = ({
   };
 
   const handlePlaceOrder = () => {
+    if (state.meals.length === 0) {
+      onToast('السلة فارغة؛ أضف وجباتك أولاً');
+      return;
+    }
+
+    const emptySlot = Array.from({ length: state.n }, (_, slot) => slot).find(
+      (slot) => !state.meals.some((item) => clamp(item.slot || 0, 0, state.n - 1) === slot)
+    );
+    if (emptySlot !== undefined) {
+      onToast(`أكمل ${getMealSlotName(state, emptySlot)} قبل حفظ الطلب التجريبي`);
+      return;
+    }
+
     for (const m of state.meals) {
       if (m.kind === 'food') {
         const f = state.foods.find((x) => x.id === m.id);
-        if (f && f.available === false) {
+        if (!f) {
+          onToast('أحد المكونات لم يعد موجودًا في القائمة؛ احذفه ثم أعد اختياره');
+          return;
+        }
+        if (f.available === false) {
           onToast(`الصنف "${f.name}" لم يعد متوفرًا اليوم`);
           return;
         }
-        if (f && getBlockedAllergensForFood(f, state.al).length > 0) {
+        if (getBlockedAllergensForFood(f, state.al).length > 0) {
           onToast('تحتوي السلة على مكوّن يسبب لك حساسية');
           return;
         }
       } else if (m.kind === 'dish') {
         const d = state.dishes.find((x) => x.id === m.id);
-        if (d && d.available === false) {
+        if (!d) {
+          onToast('أحد الأطباق لم يعد موجودًا في القائمة؛ احذفه ثم أعد اختياره');
+          return;
+        }
+        if (d.available === false) {
           onToast(`الطبق "${d.name}" لم يعد متوفرًا اليوم`);
           return;
         }
-        if (d && getBlockedAllergensForDish(d, state.foods, state.al).length > 0) {
+        if (getBlockedAllergensForDish(d, state.foods, state.al).length > 0) {
           onToast('تحتوي السلة على طبق يسبب لك حساسية');
           return;
+        }
+      } else {
+        const ingredients = m.ing || [];
+        if (ingredients.length === 0) {
+          onToast('توجد وجبة مخصصة بلا مكونات؛ أكملها أو احذفها');
+          return;
+        }
+        for (const [foodId] of ingredients) {
+          const food = state.foods.find((x) => x.id === foodId);
+          if (!food || food.available === false) {
+            onToast('توجد مكونات مخصصة غير متاحة؛ راجع الوجبة');
+            return;
+          }
+          if (getBlockedAllergensForFood(food, state.al).length > 0) {
+            onToast('تحتوي إحدى الوجبات المخصصة على مسبب حساسية مسجل لديك');
+            return;
+          }
         }
       }
     }
