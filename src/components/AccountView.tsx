@@ -14,7 +14,6 @@ interface AccountViewProps {
 
 export const AccountView: React.FC<AccountViewProps> = ({
   state,
-  onUpdate,
   onReopenCalc,
   onResetAll,
   onToast,
