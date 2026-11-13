@@ -393,6 +393,49 @@ app.get('/api/admin/foods', authRequired, requireRole('admin'), asyncRoute(async
   res.json({foods:result.rows});
 }));
 
+app.post('/api/admin/foods', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const b = req.body ?? {};
+  const name = cleanText(b.name,2,160);
+  const category = ['protein','carb','fat','veg','juice'].includes(b.category) ? b.category : null;
+  const basis = ['raw','cooked','as_sold','unspecified'].includes(b.nutritionBasis) ? b.nutritionBasis : null;
+  const source = cleanText(b.nutritionSource ?? '',0,500);
+  const sourceId = cleanText(b.sourceRecordId ?? '',0,160);
+  const values = ['kcal','protein','carbs','fat','fiber','priceDzdPer100'].map((key) => bounded(b[key],0,100000));
+  const allowed = new Set(['gluten','eggs','fish','milk','nuts']);
+  const allergens = Array.isArray(b.allergens) && b.allergens.every((x:unknown) => typeof x === 'string' && allowed.has(x)) ? b.allergens : null;
+  if (!name || !category || !basis || source === null || sourceId === null || values.some((x) => x === null) || !allergens) {
+    res.status(400).json({error:'أدخل الاسم والتصنيف والقيم والمصدر وحالة الوزن ومسببات الحساسية.'}); return;
+  }
+  const result = await pool.query(
+    'INSERT INTO foods (name_ar,category,kcal_per_100,protein_per_100,carbs_per_100,fat_per_100,fiber_per_100,price_dzd_per_100,allergens,nutrition_verified,nutrition_basis,nutrition_source,source_record_id,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,false,$10,$11,$12,false) RETURNING id,name_ar,nutrition_verified,nutrition_basis,active',
+    [name,category,...values,allergens,basis,source || null,sourceId || null]
+  );
+  res.status(201).json({food:result.rows[0],note:'حُفظ العنصر كمسودة غير موثقة وغير نشطة.'});
+}));
+
+app.patch('/api/admin/foods/:id/verification', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const verified = req.body?.verified;
+  const basis = ['raw','cooked','as_sold'].includes(req.body?.nutritionBasis) ? req.body.nutritionBasis : null;
+  const source = cleanText(req.body?.nutritionSource,3,500);
+  const sourceId = cleanText(req.body?.sourceRecordId ?? '',0,160);
+  if (typeof verified !== 'boolean' || (verified && (!basis || !source || sourceId === null))) {
+    res.status(400).json({error:'يتطلب اعتماد العنصر مصدرًا وحالة وزن ومعرّف سجل عند توفره.'}); return;
+  }
+  const result = await pool.query(
+    'UPDATE foods SET nutrition_verified=$1,nutrition_basis=$2,nutrition_source=$3,source_record_id=$4,active=CASE WHEN $1=false THEN false ELSE active END,updated_at=now() WHERE id=$5 RETURNING id,nutrition_verified,nutrition_basis,active',
+    [verified,basis ?? 'unspecified',source || null,sourceId || null,req.params.id]
+  );
+  if (!result.rowCount) { res.status(404).json({error:'العنصر غير موجود.'}); return; }
+  res.json({food:result.rows[0]});
+}));
+
+app.get('/api/admin/dishes', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
+  const result = await pool.query(
+    'SELECT d.id,d.name_ar,d.description,d.active,COALESCE(json_agg(json_build_object(\\'foodId\\',f.id,\\'name\\',f.name_ar,\\'grams\\',di.grams)) FILTER (WHERE f.id IS NOT NULL),\\'[]\\'::json) AS ingredients FROM dishes d LEFT JOIN dish_ingredients di ON di.dish_id=d.id LEFT JOIN foods f ON f.id=di.food_id GROUP BY d.id ORDER BY d.created_at DESC'
+  );
+  res.json({dishes:result.rows});
+}));
+
 app.patch('/api/admin/foods/:id/active', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
   const active = req.body?.active;
   if (typeof active !== 'boolean') { res.status(400).json({error:'قيمة التفعيل غير صالحة.'}); return; }
