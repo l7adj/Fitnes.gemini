@@ -88,7 +88,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       <div className="max-w-xl mx-auto px-4 py-8 sm:py-12">
         <div className="text-center space-y-3 mb-8">
           <div className="text-xs font-semibold text-[#d8b25c] tracking-wide">
-            الشراقة وما جاورها · الجزائر العاصمة
+            الجزائر · معاينة تفاعلية
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#f4f1e6] text-balance">
             NutriFit DZ
@@ -255,6 +255,9 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       {step === 2 && (
         <div className="space-y-4">
           <h2 className="text-xl font-extrabold text-[#f4f1e6]">قياسات الجسم</h2>
+          <div className="rounded-xl border border-[#d4a24c]/25 bg-[#241e12]/60 px-3 py-2.5 text-[11px] leading-5 text-[#d8cba9]">
+            القيم الظاهرة مبدئياً أمثلة للمعاينة فقط. أدخل قياساتك الحقيقية قبل اعتماد أي نتيجة.
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             {(
