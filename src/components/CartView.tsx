@@ -712,7 +712,7 @@ export const CartView: React.FC<CartViewProps> = ({
                         : 'ملغى'}
                   </div>
                 </div>
-                {o.status !== 'X' && (
+                {o.status !== 'X' && (!apiEnabled || !o.productionStage || o.productionStage === 'queued') && (
                   <button
                     type="button"
                     onClick={() => void cancelOrder(o)}
@@ -744,7 +744,9 @@ export const CartView: React.FC<CartViewProps> = ({
               )}
             </div>
             <h3 className="text-lg font-bold text-[#f3f1ec]">
-              {confirmModal.status === 'C' ? 'تم حفظ طلبك التجريبي' : 'تم حفظ طلبك في قائمة الانتظار التجريبية'}
+              {apiEnabled
+                ? confirmModal.status === 'C' ? 'تم تسجيل طلبك بنجاح' : 'تم تسجيل طلبك في قائمة الانتظار'
+                : confirmModal.status === 'C' ? 'تم حفظ طلب المعاينة' : 'تم حفظ طلب المعاينة في قائمة الانتظار'}
             </h3>
             <p className="text-xs text-[#9b988d] leading-relaxed">
               {apiEnabled
