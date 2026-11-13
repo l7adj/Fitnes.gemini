@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction, RequestHandler } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -282,6 +283,27 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
             kcal:Number(row.kcal_per_100)*factor,protein:Number(row.protein_per_100)*factor,
             carbs:Number(row.carbs_per_100)*factor,fat:Number(row.fat_per_100)*factor});
         }
+      } else if (item.kind === 'custom') {
+        const entries = item.ingredients;
+        if (!Array.isArray(entries) || entries.length < 1 || entries.length > 30) throw new Error('INVALID_CUSTOM_INGREDIENTS');
+        label = cleanText(item.label,2,160) ?? 'وجبة مخصصة';
+        for (const entry of entries) {
+          const grams = bounded(entry?.grams,1,1500);
+          const foodId = cleanText(entry?.foodId,1,80);
+          if (grams === null || !foodId) throw new Error('INVALID_CUSTOM_INGREDIENTS');
+          const found = await client.query(
+            "SELECT id,name_ar,kcal_per_100,protein_per_100,carbs_per_100,fat_per_100,price_dzd_per_100,allergens,nutrition_verified,nutrition_basis,nutrition_source FROM foods WHERE id=$1 AND active=true FOR SHARE",
+            [foodId]
+          );
+          const food = found.rows[0];
+          if (!food) throw new Error('FOOD_UNAVAILABLE');
+          if (!food.nutrition_verified || food.nutrition_basis === 'unspecified' || !food.nutrition_source) throw new Error('FOOD_NOT_VERIFIED');
+          if ((food.allergens ?? []).some((x:string) => blocked.has(x))) throw new Error('ALLERGEN_BLOCK');
+          const factor = grams/100;
+          ingredients.push({id:food.id,name:food.name_ar,grams,price:Number(food.price_dzd_per_100),
+            kcal:Number(food.kcal_per_100)*factor,protein:Number(food.protein_per_100)*factor,
+            carbs:Number(food.carbs_per_100)*factor,fat:Number(food.fat_per_100)*factor});
+        }
       } else throw new Error('INVALID_KIND');
 
       const totals = ingredients.reduce((sum,x) => ({
@@ -340,7 +362,7 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
       FOOD_UNAVAILABLE:'أحد المكونات غير متاح.',FOOD_NOT_VERIFIED:'لا يمكن طلب مكوّن غير موثق غذائياً.',
       ALLERGEN_BLOCK:'يتضمن الطلب مسبب حساسية مسجلاً في ملفك.',
       INVALID_MULTIPLIER:'حجم أحد الأطباق غير صالح.',DISH_UNAVAILABLE:'أحد الأطباق غير متاح.',
-      INVALID_KIND:'نوع عنصر الطلب غير مدعوم.',INCOMPLETE_SLOTS:'يجب أن تحتوي كل وجبة على عنصر واحد على الأقل.',
+      INVALID_KIND:'نوع عنصر الطلب غير مدعوم.',INVALID_CUSTOM_INGREDIENTS:'مكونات الوجبة المخصصة أو أوزانها غير صالحة.',INCOMPLETE_SLOTS:'يجب أن تحتوي كل وجبة على عنصر واحد على الأقل.',
     };
     if (messages[error?.message]) { res.status(400).json({error:messages[error.message]}); return; }
     throw error;
