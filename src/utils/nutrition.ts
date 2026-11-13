@@ -250,7 +250,11 @@ export function calcNutrition(state: AppState): CalcResult {
     };
   }
 
-  const kat = state.lbm > 0 && state.rel >= 70;
+  const kat =
+    state.lbm > 0 &&
+    state.rel >= 70 &&
+    state.lbmMethod !== undefined &&
+    state.lbmMethod !== 'none';
   const bmr = kat
     ? 370 + 21.6 * state.lbm
     : 10 * state.w + 6.25 * state.h - 5 * state.age + (state.sex === 'm' ? 5 : -161);
@@ -259,7 +263,7 @@ export function calcNutrition(state: AppState): CalcResult {
 
   if (kcal < bmr) {
     return {
-      err: `السعرات المستهدفة (${round0(kcal)} kcal) أقل من معدل الأيض الأساسي (${round0(bmr)} kcal). خفّف نسبة العجز.`,
+      err: `السعرات المستهدفة (${round0(kcal)} kcal) أقل من معدل الأيض في الراحة (${round0(bmr)} kcal). خفّف نسبة العجز.`,
       kat,
       bmi,
       bmr,
@@ -280,8 +284,8 @@ export function calcNutrition(state: AppState): CalcResult {
   }
 
   const warn: string[] = [];
-  if (state.lbm > 0 && state.rel < 70) {
-    warn.push('لم تُستخدم قيمة LBM لأن موثوقية القياس أقل من 70%؛ استُخدمت معادلة Mifflin-St Jeor.');
+  if (state.lbm > 0 && (!state.lbmMethod || state.lbmMethod === 'none' || state.rel < 70)) {
+    warn.push('لم تُستخدم قيمة LBM لعدم توثيق طريقة القياس أو لأن موثوقيتها أقل من 70%؛ استُخدمت معادلة Mifflin-St Jeor.');
   }
   if (state.pct < -20) {
     warn.push('عجز أكبر من 20%: يُنصح به لفترات قصيرة ومراقبة دقيقة فقط.');
