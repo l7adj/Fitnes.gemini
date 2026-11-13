@@ -239,8 +239,12 @@ export const CartView: React.FC<CartViewProps> = ({
             items: state.meals.map((item) => ({
               kind: item.kind,
               id: item.id,
+              label: item.name,
               grams: item.grams,
               multiplier: item.mult ?? 1,
+              ingredients: item.kind === 'custom'
+                ? (item.ing ?? []).map(([foodId, grams]) => ({ foodId, grams }))
+                : undefined,
               slot: clamp(item.slot || 0, 0, state.n - 1),
               slotName: getMealSlotName(state, clamp(item.slot || 0, 0, state.n - 1)),
             })),
