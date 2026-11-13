@@ -88,6 +88,23 @@ export const CartView: React.FC<CartViewProps> = ({
     });
   };
 
+  const cancelOrder = async (order: Order) => {
+    if (apiEnabled) {
+      if (!authToken) { onToast('انتهت جلسة الدخول؛ سجّل الدخول مجدداً.'); return; }
+      try {
+        await apiRequest('/api/orders/' + order.id,authToken,{method:'DELETE'});
+      } catch (error) {
+        onToast(error instanceof Error ? error.message : 'تعذر إلغاء الطلب.');
+        return;
+      }
+    }
+    onUpdate((prev) => ({
+      ...prev,
+      ord: prev.ord.map((item) => item.id === order.id ? {...item,status:'X'} : item),
+    }));
+    onToast('تم إلغاء الطلب.');
+  };
+
   const handlePlaceOrder = async () => {
     if (!state.name.trim()) {
       onToast('أدخل الاسم أو اللقب في ملفك قبل حفظ الطلب');
@@ -689,24 +706,16 @@ export const CartView: React.FC<CartViewProps> = ({
                     }`}
                   >
                     {o.status === 'C'
-                      ? 'مؤكد — في دورة الطبخ المسائية'
+                      ? apiEnabled ? 'مؤكد لدى NutriFit · جارٍ متابعة التحضير' : 'مؤكد في سجل المعاينة المحلي'
                       : o.status === 'W'
-                        ? 'قائمة انتظار — الطاقة اليومية ممتلئة'
+                        ? apiEnabled ? 'قائمة انتظار · بانتظار اعتماد السعة' : 'قائمة انتظار تجريبية'
                         : 'ملغى'}
                   </div>
                 </div>
                 {o.status !== 'X' && (
                   <button
                     type="button"
-                    onClick={() => {
-                      onUpdate((prev) => ({
-                        ...prev,
-                        ord: prev.ord.map((x) =>
-                          x.id === o.id ? { ...x, status: 'X' } : x
-                        ),
-                      }));
-                      onToast('تم إلغاء الطلب');
-                    }}
+                    onClick={() => void cancelOrder(o)}
                     className="px-3 py-1.5 rounded-lg border border-[#4a2b26] bg-[#1f1412] text-xs font-bold text-[#c45d51] cursor-pointer"
                   >
                     إلغاء
@@ -738,9 +747,13 @@ export const CartView: React.FC<CartViewProps> = ({
               {confirmModal.status === 'C' ? 'تم حفظ طلبك التجريبي' : 'تم حفظ طلبك في قائمة الانتظار التجريبية'}
             </h3>
             <p className="text-xs text-[#9b988d] leading-relaxed">
-              {confirmModal.status === 'C'
-                ? `هذا سجل تجريبي محفوظ على هذا الجهاز. لم يُرسل إلى المطبخ ولم يُنشأ توصيل فعلي.`
-                : 'هذه محاكاة محلية لقائمة الانتظار؛ لا توجد حالياً خدمة إرسال أو إشعارات للمطبخ.'}
+              {apiEnabled
+                ? confirmModal.status === 'C'
+                  ? 'تم تسجيل الطلب في قاعدة بيانات الخدمة. سيظهر لفريق التشغيل وفق السعة المعتمدة، وتبقى حالة الدفع نقداً عند الاستلام.'
+                  : 'سُجل الطلب في قائمة الانتظار على الخادم. لا يبدأ التحضير إلا بعد تأكيد الإدارة توفر السعة.'
+                : confirmModal.status === 'C'
+                  ? 'هذا سجل معاينة محفوظ على هذا الجهاز فقط؛ لم يُرسل إلى المطبخ ولم يُنشأ توصيل فعلي.'
+                  : 'هذه محاكاة محلية لقائمة الانتظار؛ لا توجد خدمة إرسال أو إشعارات للمطبخ.'}
             </p>
             <div className="bg-[#191d19] border border-[#262b24] rounded-xl p-3 text-xs flex justify-between tabular-nums">
               <span className="text-[#9b988d]">رقم الطلب: {confirmModal.id}</span>
