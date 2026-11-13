@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 type Role = 'customer' | 'admin' | 'kitchen' | 'delivery';
 type AuthRequest = Request & { auth?: { id: string; role: Role } };
-type Ingredient = { id:string; name:string; grams:number; price:number; kcal:number; protein:number; carbs:number; fat:number };
+type Ingredient = { id:string; name:string; grams:number; price:number; kcal:number; protein:number; carbs:number; fat:number; basis:string; source:string };
 const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL;
 const JWT_SECRET = process.env.JWT_SECRET || '';
@@ -343,9 +343,9 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
       );
       for (const ingredient of item.ingredients) {
         await client.query(
-          'INSERT INTO order_item_ingredients (order_item_id,food_id,food_name_snapshot,grams,unit_price_snapshot,kcal_snapshot,protein_snapshot,carbs_snapshot,fat_snapshot) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+          'INSERT INTO order_item_ingredients (order_item_id,food_id,food_name_snapshot,grams,unit_price_snapshot,kcal_snapshot,protein_snapshot,carbs_snapshot,fat_snapshot,nutrition_basis_snapshot,nutrition_source_snapshot) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
           [line.rows[0].id,ingredient.id,ingredient.name,ingredient.grams,ingredient.price,
-           ingredient.kcal,ingredient.protein,ingredient.carbs,ingredient.fat]
+           ingredient.kcal,ingredient.protein,ingredient.carbs,ingredient.fat,ingredient.basis,ingredient.source]
         );
       }
     }
@@ -407,7 +407,7 @@ app.get('/api/orders', authRequired, requireRole('customer'), asyncRoute(async (
   );
   const ids = result.rows.map((x) => x.id);
   const items = ids.length ? await pool.query(
-    "SELECT oi.*,COALESCE(json_agg(json_build_object('name',ii.food_name_snapshot,'grams',ii.grams)) FILTER (WHERE ii.id IS NOT NULL),'[]'::json) AS ingredients FROM order_items oi LEFT JOIN order_item_ingredients ii ON ii.order_item_id=oi.id WHERE oi.order_id=ANY($1::uuid[]) GROUP BY oi.id ORDER BY oi.slot,oi.id",
+    "SELECT oi.*,COALESCE(json_agg(json_build_object('name',ii.food_name_snapshot,'grams',ii.grams,'basis',ii.nutrition_basis_snapshot,'source',ii.nutrition_source_snapshot)) FILTER (WHERE ii.id IS NOT NULL),'[]'::json) AS ingredients FROM order_items oi LEFT JOIN order_item_ingredients ii ON ii.order_item_id=oi.id WHERE oi.order_id=ANY($1::uuid[]) GROUP BY oi.id ORDER BY oi.slot,oi.id",
     [ids]
   ) : { rows:[] as any[] };
   const grouped = new Map<string,any[]>();
