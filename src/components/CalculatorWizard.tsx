@@ -98,6 +98,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
           </p>
         </div>
 
+        <div className="mb-5 rounded-xl border border-[#d4a24c]/30 bg-[#241e12]/70 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]">
+          <strong className="text-[#e5cf94]">نسخة معاينة:</strong>
+          هذه الواجهة تختبر رحلة العميل والحسابات محلياً. لم تُربط بعد بخدمة طلبات أو مطبخ أو توصيل مباشر.
+        </div>
+
         <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-5 space-y-4 mb-6">
           <div className="text-sm font-bold text-[#f4f1e6]">الرحلة الكاملة في نظام واحد</div>
           <div className="space-y-3 text-sm text-[#a8a493] leading-relaxed">
@@ -111,11 +116,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </div>
             <div className="flex gap-3">
               <span className="font-num font-bold text-[#d8b25c]">03</span>
-              <span>نطبخ مساءً بعد إغلاق الطلبات الساعة 16:00، والتوصيل 07:00–08:30 صباحًا.</span>
+              <span>تُحدّد نافذة التحضير والتوصيل في ملف التشغيل بعد اعتماد المنطقة والطاقة اليومية.</span>
             </div>
             <div className="flex gap-3">
               <span className="font-num font-bold text-[#d8b25c]">04</span>
-              <span>تسعير واضح: المكونات بسعر السوق + مناولة 7% + أجر خدمة 200 دج/وجبة.</span>
+              <span>هيكل تكلفة قابل للتفصيل: مكونات + مناولة + خدمة + توصيل، وتُعتمد الأسعار الفعلية من الإدارة.</span>
             </div>
           </div>
         </div>
@@ -127,13 +132,6 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             className="w-full py-3.5 px-6 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
           >
             ابدأ الحاسبة العلمية
-          </button>
-          <button
-            type="button"
-            onClick={onFinish}
-            className="w-full py-3 px-6 rounded-xl font-bold text-sm text-[#f4f1e6] bg-[#1c2216] border border-[#2b3322] hover:border-[#d8b25c]/50 transition cursor-pointer"
-          >
-            دخول سريع بملف رياضي جاهز (82.4 كغ)
           </button>
         </div>
 
@@ -182,7 +180,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               value={state.age}
               unit="سنة"
               step={1}
-              min={10}
+              min={18}
               max={100}
               onChange={(age) => onUpdate((prev) => ({ ...prev, age }))}
             />
