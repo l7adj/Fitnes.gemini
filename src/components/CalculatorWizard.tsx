@@ -164,6 +164,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </p>
           </div>
 
+          <div className="rounded-xl border border-[#d4a24c]/25 bg-[#241e12]/60 px-3 py-2.5 text-[11px] leading-5 text-[#d8cba9]">
+            <strong className="text-[#e5cf94]">تنبيه الخصوصية:</strong>
+            بيانات القياسات وإجابات السلامة تُحفظ محلياً في هذا المتصفح فقط. لا توجد مزامنة أو حساب محمي في نسخة المعاينة؛ تجنب إدخال بيانات حساسة على جهاز مشترك.
+          </div>
+
           <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
             <label className="block text-xs font-semibold text-[#a8a493] mb-1.5">
               الاسم أو اللقب (يُطبع على العلبة)
