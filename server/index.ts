@@ -264,7 +264,7 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
         const factor = grams/100;
         ingredients = [{id:food.id,name:food.name_ar,grams,price:Number(food.price_dzd_per_100),
           kcal:Number(food.kcal_per_100)*factor,protein:Number(food.protein_per_100)*factor,
-          carbs:Number(food.carbs_per_100)*factor,fat:Number(food.fat_per_100)*factor}];
+          carbs:Number(food.carbs_per_100)*factor,fat:Number(food.fat_per_100)*factor,basis:food.nutrition_basis,source:food.nutrition_source}];
         label = food.name_ar;
       } else if (item.kind === 'dish') {
         const multiplier = bounded(item.multiplier ?? 1,0.1,4);
@@ -281,7 +281,7 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
           const grams = Number(row.grams)*multiplier, factor = grams/100;
           ingredients.push({id:row.food_id,name:row.food_name,grams,price:Number(row.price_dzd_per_100),
             kcal:Number(row.kcal_per_100)*factor,protein:Number(row.protein_per_100)*factor,
-            carbs:Number(row.carbs_per_100)*factor,fat:Number(row.fat_per_100)*factor});
+            carbs:Number(row.carbs_per_100)*factor,fat:Number(row.fat_per_100)*factor,basis:row.nutrition_basis,source:row.nutrition_source});
         }
       } else if (item.kind === 'custom') {
         const entries = item.ingredients;
@@ -302,7 +302,7 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
           const factor = grams/100;
           ingredients.push({id:food.id,name:food.name_ar,grams,price:Number(food.price_dzd_per_100),
             kcal:Number(food.kcal_per_100)*factor,protein:Number(food.protein_per_100)*factor,
-            carbs:Number(food.carbs_per_100)*factor,fat:Number(food.fat_per_100)*factor});
+            carbs:Number(food.carbs_per_100)*factor,fat:Number(food.fat_per_100)*factor,basis:food.nutrition_basis,source:food.nutrition_source});
         }
       } else throw new Error('INVALID_KIND');
 
