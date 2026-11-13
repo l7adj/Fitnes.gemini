@@ -431,7 +431,7 @@ app.patch('/api/admin/foods/:id/verification', authRequired, requireRole('admin'
 
 app.get('/api/admin/dishes', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
   const result = await pool.query(
-    'SELECT d.id,d.name_ar,d.description,d.active,COALESCE(json_agg(json_build_object(\\'foodId\\',f.id,\\'name\\',f.name_ar,\\'grams\\',di.grams)) FILTER (WHERE f.id IS NOT NULL),\\'[]\\'::json) AS ingredients FROM dishes d LEFT JOIN dish_ingredients di ON di.dish_id=d.id LEFT JOIN foods f ON f.id=di.food_id GROUP BY d.id ORDER BY d.created_at DESC'
+    "SELECT d.id,d.name_ar,d.description,d.active,COALESCE(json_agg(json_build_object('foodId',f.id,'name',f.name_ar,'grams',di.grams)) FILTER (WHERE f.id IS NOT NULL),'[]'::json) AS ingredients FROM dishes d LEFT JOIN dish_ingredients di ON di.dish_id=d.id LEFT JOIN foods f ON f.id=di.food_id GROUP BY d.id ORDER BY d.created_at DESC"
   );
   res.json({dishes:result.rows});
 }));
