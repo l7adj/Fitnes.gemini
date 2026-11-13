@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,17 +18,21 @@ async function migrate() {
   try {
     await client.query('BEGIN');
     await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())');
-    const existing = await client.query('SELECT version FROM schema_migrations WHERE version=$1',['001_initial_schema']);
-    if (existing.rowCount) {
-      console.log('Migration 001_initial_schema already applied.');
-      await client.query('COMMIT');
-      return;
+    const directory = path.dirname(migrationPath);
+    const files = (await readdir(directory)).filter((name) => /^\d+_[a-z0-9_-]+\.sql$/i.test(name)).sort();
+    for (const file of files) {
+      const version = file.replace(/\.sql$/i,'');
+      const existing = await client.query('SELECT version FROM schema_migrations WHERE version=$1',[version]);
+      if (existing.rowCount) {
+        console.log('Migration ' + version + ' already applied.');
+        continue;
+      }
+      const sql = await readFile(path.join(directory,file),'utf8');
+      await client.query(sql);
+      await client.query('INSERT INTO schema_migrations (version) VALUES ($1)',[version]);
+      console.log('Migration ' + version + ' applied successfully.');
     }
-    const sql = await readFile(migrationPath,'utf8');
-    await client.query(sql);
-    await client.query('INSERT INTO schema_migrations (version) VALUES ($1)',['001_initial_schema']);
     await client.query('COMMIT');
-    console.log('Migration 001_initial_schema applied successfully.');
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
