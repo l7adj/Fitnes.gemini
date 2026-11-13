@@ -38,7 +38,7 @@ export const EquationTable: React.FC<EquationTableProps> = ({ state, result }) =
           <div>
             <div className="text-[#f3f1ec] font-semibold">
               معدل الأيض الأساسي ({result.kat ? 'Katch-McArdle' : 'Mifflin-St Jeor'})
-              <Tag code="F" title="معادلة علمية منشورة" />
+              <Tag code="F" title="Mifflin et al., 1990؛ أو Katch-McArdle عند وجود LBM مقاس" />
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5 tabular-nums" dir="ltr">
               {bmrFormula}
@@ -53,7 +53,7 @@ export const EquationTable: React.FC<EquationTableProps> = ({ state, result }) =
           <div>
             <div className="text-[#f3f1ec] font-semibold">
               الاحتياج اليومي الكلي (TDEE)
-              <Tag code="R" title="نطاق مرجعي FAO/WHO/UNU 2004" />
+              <Tag code="R" title="نطاق مرجعي FAO/WHO/UNU 2004" /><Tag code="O" title="معامل النشاط المحدد داخل النطاق" />
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5 tabular-nums">
               {round0(result.bmr)} × معامل النشاط {state.pal.toFixed(2)}
@@ -83,7 +83,7 @@ export const EquationTable: React.FC<EquationTableProps> = ({ state, result }) =
           <div>
             <div className="text-[#f3f1ec] font-semibold">
               البروتين الكلي
-              <Tag code="O" title="توصية ISSN 2017" />
+              <Tag code="R" title="نطاقات ISSN Position Stand (2017)" /><Tag code="O" title="الاختيار الافتراضي داخل النطاق حسب الهدف" />
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5 tabular-nums">
               {result.pg.toFixed(2)} غ/كغ × {result.kat && state.goal === 'cut' ? `${state.lbm} كغ LBM` : `${state.w} كغ`}
@@ -98,7 +98,7 @@ export const EquationTable: React.FC<EquationTableProps> = ({ state, result }) =
           <div>
             <div className="text-[#f3f1ec] font-semibold">
               الدهون الأساسية (25% من الطاقة)
-              <Tag code="O" title="توصية IOM DRI 2005 (20–35%)" />
+              <Tag code="R" title="النطاق المقبول IOM DRI 2005: 20–35%" /><Tag code="O" title="الاختيار الافتراضي 25%" />
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5 tabular-nums">
               ({round0(result.kcal)} × 0.25) ÷ 9
@@ -113,7 +113,7 @@ export const EquationTable: React.FC<EquationTableProps> = ({ state, result }) =
           <div>
             <div className="text-[#f3f1ec] font-semibold">
               الكربوهيدرات (باقي الطاقة بعد البروتين والدهون)
-              <Tag code="R" title="مرجع ACSM 2016" />
+              <Tag code="F" title="باقي الطاقة ÷ 4 kcal لكل غرام كربوهيدرات وفق Atwater" />
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5 tabular-nums">
               {result.cg.toFixed(1)} غ/كغ من وزن الجسم
