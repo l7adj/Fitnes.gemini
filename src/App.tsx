@@ -11,6 +11,7 @@ import { JournalView } from './components/JournalView';
 import { AccountView } from './components/AccountView';
 import { AdminView } from './components/AdminView';
 import { AuthView } from './components/AuthView';
+import { OperationsView } from './components/OperationsView';
 import { API_ENABLED, apiRequest, ApiSession, ApiUser } from './services/api';
 import {
   Home,
@@ -293,15 +294,7 @@ export default function App() {
     return <AuthView onAuthenticated={handleAuthenticated} />;
   }
   if (API_ENABLED && session && session.user.role !== 'customer') {
-    return (
-      <main dir="rtl" className="min-h-screen bg-[#0b0e0c] text-[#f4f1e9] flex items-center justify-center p-6">
-        <div className="max-w-md rounded-2xl border border-[#34372e] bg-[#121612] p-6 text-center space-y-3">
-          <h1 className="text-xl font-bold">حساب فريق NutriFit</h1>
-          <p className="text-sm leading-6 text-[#aaa79b]">تم تسجيل الدخول بصلاحية {session.user.role}، لكن واجهة العمليات المتصلة لم تُفعّل بعد لهذا الحساب.</p>
-          <button type="button" onClick={logout} className="rounded-xl bg-[#c9a85c] px-5 py-3 text-sm font-bold text-[#17140d]">تسجيل الخروج</button>
-        </div>
-      </main>
-    );
+    return <OperationsView session={session} onLogout={logout} />;
   }
 
   // Onboarding / Scientific Calculator Wizard
