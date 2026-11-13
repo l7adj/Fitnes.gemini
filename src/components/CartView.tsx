@@ -84,6 +84,10 @@ export const CartView: React.FC<CartViewProps> = ({
   };
 
   const handlePlaceOrder = () => {
+    if (!state.name.trim()) {
+      onToast('أدخل الاسم أو اللقب في ملفك قبل حفظ الطلب');
+      return;
+    }
     if (state.meals.length === 0) {
       onToast('السلة فارغة؛ أضف وجباتك أولاً');
       return;
