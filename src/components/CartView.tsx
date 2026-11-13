@@ -180,6 +180,12 @@ export const CartView: React.FC<CartViewProps> = ({
         )}
       </div>
 
+      <div className="rounded-xl border border-[#d4a24c]/30 bg-[#241e12]/70 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]" role="status">
+        <strong className="text-[#e5cf94]">نسخة معاينة:</strong>
+        يمكنك اختبار توزيع الوجبات والتكلفة وحفظ طلب تجريبي على هذا الجهاز فقط.
+        لا يُرسل الطلب إلى مطبخ فعلي ولا يحجز موعد توصيل.
+      </div>
+
       {state.meals.length === 0 ? (
         <div className="bg-[#131613] border border-[#262b24] rounded-2xl p-8 text-center space-y-3">
           <div className="text-sm font-bold text-[#f3f1ec]">سلة وجبات الغد فارغة</div>
@@ -605,12 +611,12 @@ export const CartView: React.FC<CartViewProps> = ({
               )}
             </div>
             <h3 className="text-lg font-bold text-[#f3f1ec]">
-              {confirmModal.status === 'C' ? 'تم تأكيد طلبك ودخل الإنتاج' : 'تم إدراجك في قائمة الانتظار'}
+              {confirmModal.status === 'C' ? 'تم حفظ طلبك التجريبي' : 'تم حفظ طلبك في قائمة الانتظار التجريبية'}
             </h3>
             <p className="text-xs text-[#9b988d] leading-relaxed">
               {confirmModal.status === 'C'
-                ? `نشتري مكوناتك طازجة ونطبخ مساءً، ويصلك الطلب ${formatArabicDate(confirmModal.date)} (${confirmModal.zoneTitle}).`
-                : 'الطاقة اليومية للمطبخ مكتملة حاليًا. ستتلقى تأكيدًا فور توفر مكان.'}
+                ? `هذا سجل تجريبي محفوظ على هذا الجهاز. لم يُرسل إلى المطبخ ولم يُنشأ توصيل فعلي.`
+                : 'هذه محاكاة محلية لقائمة الانتظار؛ لا توجد حالياً خدمة إرسال أو إشعارات للمطبخ.'}
             </p>
             <div className="bg-[#191d19] border border-[#262b24] rounded-xl p-3 text-xs flex justify-between tabular-nums">
               <span className="text-[#9b988d]">رقم الطلب: {confirmModal.id}</span>
