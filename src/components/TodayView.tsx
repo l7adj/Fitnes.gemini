@@ -70,6 +70,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
   return (
     <div className="space-y-4">
+      <div className="rounded-xl border border-[#d4a24c]/25 bg-[#241e12]/60 px-4 py-2.5 text-[11px] leading-6 text-[#c9bd9e]">
+        <strong className="text-[#e5cf94]">وضع المعاينة:</strong>
+        الأرقام والسعة والطلبات هنا للتجربة على هذا الجهاز، وليست اتصالاً مباشراً بالمطبخ أو نظام توصيل.
+      </div>
+
       {/* Greeting & Date */}
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
@@ -81,7 +86,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </h1>
         </div>
         <div className="text-xs text-[#9b988d] tabular-nums">
-          الطاقة المتاحة للغد: <b className="text-[#c9a85c]">{remainingCap}</b> / {state.cap} وجبة
+          سعة المعاينة للغد: <b className="text-[#c9a85c]">{remainingCap}</b> / {state.cap} وجبة
         </div>
       </div>
 
@@ -279,7 +284,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           {latestOrder && (
             <div className="bg-[#131613] border border-[#262b24] rounded-2xl p-4">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-medium text-[#9b988d]">آخر طلب مسجّل</div>
+                <div className="text-xs font-medium text-[#9b988d]">آخر طلب تجريبي محفوظ</div>
                 <span
                   className={`text-xs font-bold ${
                     latestOrder.status === 'C'
@@ -290,10 +295,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   }`}
                 >
                   {latestOrder.status === 'C'
-                    ? 'مؤكد للإنتاج'
+                    ? 'محفوظ محلياً · غير مرسل'
                     : latestOrder.status === 'W'
-                      ? 'قائمة انتظار'
-                      : 'ملغى'}
+                      ? 'انتظار تجريبي · غير مرسل'
+                      : 'ملغى محلياً'}
                 </span>
               </div>
               <div className="mt-2 flex items-baseline justify-between">
