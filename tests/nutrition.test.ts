@@ -50,3 +50,25 @@ test('Katch-McArdle is used only when measured lean mass is supplied with suffic
   assert.equal(result.kat, true);
   assert.equal(result.bmr, 370 + 21.6 * 60);
 });
+
+test('PAL cannot escape its selected activity band', () => {
+  const state = createInitialState();
+  state.band = 'A';
+  state.pal = 2.1;
+
+  const result = calcNutrition(state);
+
+  assert.match(result.err ?? '', /خارج نطاق/);
+});
+
+test('unreliable lean-mass measurements fall back to Mifflin with an explicit warning', () => {
+  const state = createInitialState();
+  state.lbm = 60;
+  state.rel = 69;
+
+  const result = calcNutrition(state);
+
+  assert.equal(result.err, null);
+  assert.equal(result.kat, false);
+  assert.ok(result.warn.some((warning) => warning.includes('موثوقية القياس أقل من 70%')));
+});
