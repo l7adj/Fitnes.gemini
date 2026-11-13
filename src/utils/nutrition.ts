@@ -335,7 +335,7 @@ export function calcNutrition(state: AppState): CalcResult {
   const sc = state.sup ? Math.min(state.supg, 0.5 * P) : 0;
   // Classify the amount actually credited, while retaining whether the
   // requested supplement amount exceeded the operational 50% ceiling.
-  const requestedSp = P > 0 ? (state.supg / P) * 100 : 0;
+  const requestedSp = state.sup && P > 0 ? (state.supg / P) * 100 : 0;
   const sp = P > 0 ? (sc / P) * 100 : 0;
   const ev =
     requestedSp > 50
