@@ -10,6 +10,7 @@ interface AccountViewProps {
   onReopenCalc: () => void;
   onResetAll: () => void;
   onToast: (msg: string) => void;
+  embedded?: boolean;
 }
 
 export const AccountView: React.FC<AccountViewProps> = ({
@@ -17,6 +18,7 @@ export const AccountView: React.FC<AccountViewProps> = ({
   onReopenCalc,
   onResetAll,
   onToast,
+  embedded = false,
 }) => {
   const [confirmReset, setConfirmReset] = useState(false);
   const [showBulletin, setShowBulletin] = useState(false);
@@ -43,7 +45,7 @@ export const AccountView: React.FC<AccountViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-[#f3f1ec]">الحساب والملف الغذائي</h1>
+      {!embedded && <h1 className="text-2xl font-bold text-[#f3f1ec]">الحساب والملف الغذائي</h1>}
 
       <div className="rounded-xl border border-[#c8a96e]/25 bg-[#18181c] px-4 py-3 text-[11px] leading-6 text-[#96938a]">
         <strong className="text-[#e6d1a3]">خصوصية البيانات:</strong>{' '}

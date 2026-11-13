@@ -874,7 +874,7 @@ export const MenuView: React.FC<MenuViewProps> = ({
         </div>
       )}
 
-      {/* PRECISION QUANTITY & STANDALONE-OR-MIX SLIDE-OVER CONFIGURATOR */}
+      {/* INVERTED ERGONOMIC PORTION CONFIGURATOR: TOP = LIVE READOUT, BOTTOM = THUMB CONTROLS */}
       <AnimatePresence>
         {selectedFood && (
           <motion.div
@@ -882,18 +882,18 @@ export const MenuView: React.FC<MenuViewProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex justify-end"
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-stretch sm:justify-end"
             onClick={(e) => {
               if (e.target === e.currentTarget) setSelectedFoodId(null);
             }}
           >
             <motion.aside
-              initial={{ x: -32, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -32, opacity: 0 }}
+              initial={{ y: 28, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 28, opacity: 0 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               aria-label="تخصيص الكمية والخلط"
-              className="w-full max-w-lg h-full bg-[#09090b] border-r border-[#232329] flex flex-col shadow-2xl"
+              className="w-full sm:max-w-lg h-[92dvh] sm:h-full bg-[#09090b] rounded-t-3xl sm:rounded-none border-t sm:border-t-0 sm:border-r border-[#232329] flex flex-col shadow-2xl overflow-hidden"
             >
               {(() => {
                 const isJuice = selectedFood.cat === 'juice';
@@ -937,52 +937,99 @@ export const MenuView: React.FC<MenuViewProps> = ({
 
                 return (
                   <>
-                    {/* Drawer Header */}
-                    <div className="p-4 sm:p-5 border-b border-[#232329] bg-[#111114] flex items-center justify-between gap-3 shrink-0">
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-medium text-[#c8a96e]">
-                          0{safeSlot + 1}. {getMealSlotName(state, safeSlot)}
-                        </div>
-                        <h2 className="text-base sm:text-lg font-bold text-[#f3f1ec] truncate">
-                          {selectedFood.name}
-                        </h2>
+                    {/* ZONE 1 (TOP PINNED READING ZONE): NEVER OBSCURED BY THUMB */}
+                    <div className="bg-[#111114] border-b border-[#232329] shrink-0">
+                      <div className="flex justify-center pt-2 sm:hidden">
+                        <div className="w-10 h-1 rounded-full bg-[#2e2e36]" />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFoodId(null)}
-                        className="touch-press min-h-[40px] min-w-[40px] rounded-xl bg-[#18181c] border border-[#232329] flex items-center justify-center text-[#96938a] hover:text-[#f3f1ec] cursor-pointer"
-                        aria-label="إغلاق"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+
+                      <div className="px-4 pt-3 pb-2.5 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-medium text-[#c8a96e]">
+                            0{safeSlot + 1}. {getMealSlotName(state, safeSlot)}
+                          </div>
+                          <h2 className="text-base sm:text-lg font-bold text-[#f3f1ec] truncate">
+                            {selectedFood.name}
+                          </h2>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFoodId(null)}
+                          className="touch-press min-h-[44px] min-w-[44px] rounded-xl bg-[#18181c] border border-[#232329] flex items-center justify-center text-[#96938a] hover:text-[#f3f1ec] cursor-pointer shrink-0"
+                          aria-label="إغلاق"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Pinned Live Telemetry Strip (Price + Kcal + P/C/F + Remaining Balance) */}
+                      <div className="px-4 pb-3.5 space-y-2.5">
+                        <div className="flex items-baseline justify-between gap-2 bg-[#18181c] border border-[#c8a96e]/35 rounded-xl px-3.5 py-2.5 tabular-nums">
+                          <div>
+                            <span className="text-[11px] text-[#96938a] block">التكلفة والكمية</span>
+                            <div className="text-sm font-bold text-[#f3f1ec] mt-0.5">
+                              {round0(grams)} {unit}{' '}
+                              <span className="text-[11px] font-normal text-[#96938a]">
+                                ({round2(perUnitPrice)} دج/{unit})
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-[10px] text-[#96938a] block">الإجمالي المضاف</span>
+                            <div className="text-xl font-bold text-[#e6d1a3] leading-tight">
+                              {round1(mac.price)} دج
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-1.5 text-center bg-[#18181c] border border-[#232329] rounded-xl py-2 px-1 tabular-nums text-xs">
+                          <div>
+                            <div className="font-bold text-[#e6d1a3]">+{round0(mac.kcal)}</div>
+                            <div className="text-[10px] text-[#96938a]">kcal</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-[#c8a96e]">+{round1(mac.p)}غ</div>
+                            <div className="text-[10px] text-[#96938a]">بروتين</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-[#6b9c7e]">+{round1(mac.c)}غ</div>
+                            <div className="text-[10px] text-[#96938a]">كارب</div>
+                          </div>
+                          <div>
+                            <div className="font-bold text-[#a98c72]">+{round1(mac.f)}غ</div>
+                            <div className="text-[10px] text-[#96938a]">دهون</div>
+                          </div>
+                        </div>
+
+                        <div className="text-[11px] text-[#96938a] tabular-nums flex items-center justify-between px-0.5">
+                          <span>المتبقي لليوم بعد الإضافة:</span>
+                          <b className="text-[#f3f1ec]">
+                            {round0(remKcalAfter)} kcal · P{round0(remPAfter)} C{round0(remCAfter)} F{round0(remFAfter)}
+                          </b>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Drawer Content */}
-                    <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
-                      {/* Frosted Editorial Food Banner */}
-                      <div className="relative h-40 rounded-2xl overflow-hidden border border-[#232329] bg-[#18181c]">
+                    {/* ZONE 2 (MIDDLE SCROLLABLE CONTEXT & MIX MODE) */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {/* Compact Editorial Food Reference */}
+                      <div className="flex items-center gap-3.5 bg-[#111114] border border-[#232329] rounded-2xl p-3">
                         <img
                           ref={drawerImageRef}
                           src={getFoodImage(selectedFood)}
                           alt={selectedFood.name}
                           referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover"
+                          className="w-20 h-20 rounded-xl object-cover border border-[#232329] shrink-0"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/55 to-transparent" />
-                        <div className="absolute bottom-3 right-4 left-4 flex items-end justify-between gap-3">
-                          <div>
-                            <div className="text-[11px] text-[#c8a96e]">
-                              {CATEGORY_LABELS[selectedFood.cat]} · {formatProvenanceShort(selectedFood)}
-                            </div>
-                            <div className="text-xs text-[#96938a] mt-0.5 tabular-nums">
-                              لكل 100{unit}: {round0(selectedFood.per100.kcal)} kcal · P{round1(selectedFood.per100.p)} · C{round1(selectedFood.per100.c)} · F{round1(selectedFood.per100.f)}
-                            </div>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="text-[11px] text-[#c8a96e] font-medium truncate">
+                            {CATEGORY_LABELS[selectedFood.cat]} · {formatProvenanceShort(selectedFood)}
                           </div>
-                          <div className="text-left shrink-0 tabular-nums">
-                            <div className="text-sm font-bold text-[#e6d1a3]">
-                              {round1(selectedFood.price)} دج
-                            </div>
-                            <div className="text-[10px] text-[#96938a]">/ 100{unit}</div>
+                          <div className="text-xs text-[#f3f1ec] font-semibold tabular-nums">
+                            المرجع لكل 100{unit}: {round1(selectedFood.price)} دج
+                          </div>
+                          <div className="text-[11px] text-[#96938a] tabular-nums">
+                            {round0(selectedFood.per100.kcal)} kcal · P{round1(selectedFood.per100.p)} · C{round1(selectedFood.per100.c)} · F{round1(selectedFood.per100.f)}
                           </div>
                         </div>
                       </div>
@@ -993,95 +1040,18 @@ export const MenuView: React.FC<MenuViewProps> = ({
                         </div>
                       )}
 
-                      {/* 1. Precision Quantity Selector */}
-                      <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 space-y-3.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-bold text-[#f3f1ec]">
-                            1. تحديد الكمية ({unit})
-                          </span>
-                          {smartFill && (
-                            <button
-                              type="button"
-                              onClick={() => setGrams(smartFill.grams)}
-                              className="touch-press px-3 py-1.5 rounded-lg bg-[#1c1a15] border border-[#c8a96e]/45 text-[11px] font-bold text-[#e6d1a3] cursor-pointer tabular-nums"
-                            >
-                              {smartFill.label}
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="flex items-center bg-[#18181c] border border-[#232329] rounded-xl overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => setGrams((g) => Math.max(0, g - gramCfg.step))}
-                            className="touch-press w-14 h-12 text-xl font-bold text-[#c8a96e] hover:bg-[#232329] cursor-pointer"
-                            aria-label="إنقاص"
-                          >
-                            −
-                          </button>
-                          <input
-                            type="number"
-                            value={grams}
-                            onChange={(e) => setGrams(Math.max(0, parseFloat(e.target.value) || 0))}
-                            className="flex-1 bg-transparent text-center text-2xl font-bold text-[#f3f1ec] tabular-nums focus:outline-none"
-                            aria-label="الكمية"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setGrams((g) => g + gramCfg.step)}
-                            className="touch-press w-14 h-12 text-xl font-bold text-[#c8a96e] hover:bg-[#232329] cursor-pointer"
-                            aria-label="زيادة"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <div>
-                          <input
-                            type="range"
-                            min={gramCfg.min}
-                            max={gramCfg.max}
-                            step={gramCfg.step}
-                            value={clamp(grams, gramCfg.min, gramCfg.max)}
-                            onChange={(e) => setGrams(parseFloat(e.target.value) || 0)}
-                            className="w-full accent-[#c8a96e] cursor-pointer"
-                          />
-                          <div className="flex justify-between text-[10px] text-[#66645e] tabular-nums mt-1">
-                            <span>{gramCfg.min}{unit}</span>
-                            <span>{gramCfg.max}{unit}</span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-2">
-                          {gramCfg.presets.map((preset) => (
-                            <button
-                              key={preset}
-                              type="button"
-                              onClick={() => setGrams(preset)}
-                              className={`touch-press min-h-[40px] py-1.5 rounded-lg border text-xs font-semibold tabular-nums cursor-pointer ${
-                                grams === preset
-                                  ? 'bg-[#1c1a15] border-[#c8a96e] text-[#e6d1a3]'
-                                  : 'bg-[#18181c] border-[#232329] text-[#f3f1ec] hover:border-[#c8a96e]/40'
-                              }`}
-                            >
-                              {preset}{unit}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 2. Standalone vs. Mix With Another Food */}
+                      {/* Standalone vs. Mix With Another Food */}
                       <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 space-y-3">
                         <div className="text-xs font-bold text-[#f3f1ec] flex items-center gap-1.5">
                           <Layers className="w-4 h-4 text-[#c8a96e]" />
-                          <span>2. طريقة الإضافة للوجبة</span>
+                          <span>طريقة التقديم داخل الوجبة</span>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() => setPortionMode('standalone')}
-                            className={`touch-press min-h-[52px] p-3 rounded-xl border text-right cursor-pointer ${
+                            className={`touch-press min-h-[54px] p-3 rounded-xl border text-right cursor-pointer ${
                               portionMode === 'standalone'
                                 ? 'bg-[#1c1a15] border-[#c8a96e] text-[#f3f1ec]'
                                 : 'bg-[#18181c] border-[#232329] text-[#96938a]'
@@ -1094,7 +1064,7 @@ export const MenuView: React.FC<MenuViewProps> = ({
                           <button
                             type="button"
                             onClick={() => setPortionMode('mix')}
-                            className={`touch-press min-h-[52px] p-3 rounded-xl border text-right cursor-pointer ${
+                            className={`touch-press min-h-[54px] p-3 rounded-xl border text-right cursor-pointer ${
                               portionMode === 'mix'
                                 ? 'bg-[#1c1a15] border-[#c8a96e] text-[#f3f1ec]'
                                 : 'bg-[#18181c] border-[#232329] text-[#96938a]'
@@ -1112,7 +1082,7 @@ export const MenuView: React.FC<MenuViewProps> = ({
                               <select
                                 value={mixTargetUid}
                                 onChange={(e) => setMixTargetUid(e.target.value)}
-                                className="mt-1.5 w-full min-h-[40px] rounded-xl border border-[#232329] bg-[#18181c] px-3 py-2 text-xs text-[#f3f1ec]"
+                                className="mt-1.5 w-full min-h-[42px] rounded-xl border border-[#232329] bg-[#18181c] px-3 py-2 text-xs text-[#f3f1ec]"
                               >
                                 <option value="new">بدء طبق مخصص جديد بهذه الإضافة</option>
                                 {mixableSlotItems.map((item) => {
@@ -1133,57 +1103,96 @@ export const MenuView: React.FC<MenuViewProps> = ({
                                 value={customPlateName}
                                 onChange={(e) => setCustomPlateName(e.target.value)}
                                 placeholder="مثال: دجاج مشوي مع أرز بسمتي"
-                                className="mt-1.5 w-full min-h-[40px] rounded-xl border border-[#232329] bg-[#18181c] px-3 py-2 text-xs text-[#f3f1ec] placeholder:text-[#66645e]"
+                                className="mt-1.5 w-full min-h-[42px] rounded-xl border border-[#232329] bg-[#18181c] px-3 py-2 text-xs text-[#f3f1ec] placeholder:text-[#66645e]"
                               />
                             </label>
                           </div>
                         )}
                       </div>
-
-                      {/* 3. Live Impact Preview */}
-                      <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 space-y-2.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-[#f3f1ec]">الأثر الغذائي والتكلفة</span>
-                          <span className="text-sm font-bold text-[#e6d1a3] tabular-nums">
-                            {round1(mac.price)} دج ({round2(perUnitPrice)}/{unit})
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-2 text-center bg-[#18181c] rounded-xl py-2.5 px-1 tabular-nums text-xs">
-                          <div>
-                            <div className="font-bold text-[#e6d1a3]">+{round0(mac.kcal)}</div>
-                            <div className="text-[10px] text-[#96938a]">سعرة</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-[#c8a96e]">+{round1(mac.p)}غ</div>
-                            <div className="text-[10px] text-[#96938a]">بروتين</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-[#6b9c7e]">+{round1(mac.c)}غ</div>
-                            <div className="text-[10px] text-[#96938a]">كارب</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-[#a98c72]">+{round1(mac.f)}غ</div>
-                            <div className="text-[10px] text-[#96938a]">دهون</div>
-                          </div>
-                        </div>
-
-                        <div className="text-[11px] text-[#96938a] tabular-nums flex items-center justify-between pt-1">
-                          <span>المتبقي لليوم بعد الإضافة:</span>
-                          <b className="text-[#f3f1ec]">
-                            {round0(remKcalAfter)} kcal · P{round0(remPAfter)} C{round0(remCAfter)} F{round0(remFAfter)}
-                          </b>
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Sticky Bottom Action */}
-                    <div className="p-4 border-t border-[#232329] bg-[#111114] shrink-0">
+                    {/* ZONE 3 (BOTTOM PINNED THUMB CONTROL ZONE) */}
+                    <div className="bg-[#111114] border-t border-[#232329] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3 shrink-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-[#f3f1ec]">
+                          تحديد الكمية ({unit})
+                        </span>
+                        {smartFill && (
+                          <button
+                            type="button"
+                            onClick={() => setGrams(smartFill.grams)}
+                            className="touch-press min-h-[34px] px-3 py-1 rounded-lg bg-[#1c1a15] border border-[#c8a96e]/45 text-[11px] font-bold text-[#e6d1a3] cursor-pointer tabular-nums"
+                          >
+                            {smartFill.label}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Quick Presets */}
+                      <div className="grid grid-cols-4 gap-2">
+                        {gramCfg.presets.map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setGrams(preset)}
+                            className={`touch-press min-h-[40px] py-1.5 rounded-lg border text-xs font-semibold tabular-nums cursor-pointer ${
+                              grams === preset
+                                ? 'bg-[#1c1a15] border-[#c8a96e] text-[#e6d1a3]'
+                                : 'bg-[#18181c] border-[#232329] text-[#f3f1ec] hover:border-[#c8a96e]/40'
+                            }`}
+                          >
+                            {preset}{unit}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Precision Slider */}
+                      <div>
+                        <input
+                          type="range"
+                          min={gramCfg.min}
+                          max={gramCfg.max}
+                          step={gramCfg.step}
+                          value={clamp(grams, gramCfg.min, gramCfg.max)}
+                          onChange={(e) => setGrams(parseFloat(e.target.value) || 0)}
+                          className="w-full accent-[#c8a96e] cursor-pointer"
+                          aria-label="شريط تحديد الغرامات"
+                        />
+                      </div>
+
+                      {/* Large Thumb-Friendly Stepper */}
+                      <div className="flex items-center bg-[#18181c] border border-[#232329] rounded-xl overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setGrams((g) => Math.max(0, g - gramCfg.step))}
+                          className="touch-press w-16 h-12 text-xl font-bold text-[#c8a96e] hover:bg-[#232329] cursor-pointer"
+                          aria-label="إنقاص"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          value={grams}
+                          onChange={(e) => setGrams(Math.max(0, parseFloat(e.target.value) || 0))}
+                          className="flex-1 bg-transparent text-center text-2xl font-bold text-[#f3f1ec] tabular-nums focus:outline-none"
+                          aria-label="الكمية"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setGrams((g) => g + gramCfg.step)}
+                          className="touch-press w-16 h-12 text-xl font-bold text-[#c8a96e] hover:bg-[#232329] cursor-pointer"
+                          aria-label="زيادة"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {/* Primary Action */}
                       <button
                         type="button"
                         disabled={grams <= 0}
                         onClick={(e) => commitFoodToMeal(selectedFood, e.currentTarget)}
-                        className="touch-press w-full min-h-[48px] py-3 rounded-xl font-bold text-sm text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] disabled:opacity-40 flex items-center justify-center gap-2 cursor-pointer"
+                        className="touch-press w-full min-h-[50px] py-3 rounded-xl font-bold text-sm text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] disabled:opacity-40 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Check className="w-4 h-4" />
                         <span>

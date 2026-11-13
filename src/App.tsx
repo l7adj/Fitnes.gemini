@@ -7,8 +7,7 @@ import { CalculatorWizard } from './components/CalculatorWizard';
 import { TodayView } from './components/TodayView';
 import { MenuView } from './components/MenuView';
 import { CartView } from './components/CartView';
-import { JournalView } from './components/JournalView';
-import { AccountView } from './components/AccountView';
+import { ProfileHubView, ProfileSubtab } from './components/ProfileHubView';
 import { AdminView } from './components/AdminView';
 import { AuthView } from './components/AuthView';
 import { OperationsView } from './components/OperationsView';
@@ -17,7 +16,6 @@ import {
   Home,
   ShoppingBag,
   Sliders,
-  TrendingUp,
   User,
   UtensilsCrossed,
 } from 'lucide-react';
@@ -74,7 +72,13 @@ function loadState(): AppState {
 }
 
 export default function App() {
-  const [state, setState] = useState<AppState>(loadState);
+  const [state, setState] = useState<AppState>(() => {
+    const initial = loadState();
+    return initial.tab === 'jr' ? { ...initial, tab: 'me' } : initial;
+  });
+  const [profileSubtab, setProfileSubtab] = useState<ProfileSubtab>(() =>
+    loadState().tab === 'jr' ? 'progress' : 'progress'
+  );
   const [showWelcome, setShowWelcome] = useState(() => state.ob === 0);
   const [session, setSession] = useState<ApiSession | null>(null);
   const [sessionReady, setSessionReady] = useState(!API_ENABLED);
@@ -288,7 +292,12 @@ export default function App() {
 
   const navigate = (tab: AppTab) => {
     setPickerRequest(null);
-    setState((prev) => ({ ...prev, tab }));
+    if (tab === 'jr') {
+      setProfileSubtab('progress');
+      setState((prev) => ({ ...prev, tab: 'me' }));
+    } else {
+      setState((prev) => ({ ...prev, tab }));
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -327,15 +336,14 @@ export default function App() {
 
   const navItems: { id: AppTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'home', label: 'اليوم', icon: <Home className="w-5 h-5" /> },
-    { id: 'menu', label: 'الوجبات', icon: <UtensilsCrossed className="w-5 h-5" /> },
+    { id: 'menu', label: 'المكونات', icon: <UtensilsCrossed className="w-5 h-5" /> },
     {
       id: 'cart',
       label: 'السلة',
       icon: <ShoppingBag className="w-5 h-5" />,
       badge: state.meals.length > 0 ? state.meals.length : undefined,
     },
-    { id: 'jr', label: 'تطوري', icon: <TrendingUp className="w-5 h-5" /> },
-    { id: 'me', label: 'حسابي', icon: <User className="w-5 h-5" /> },
+    { id: 'me', label: 'الملف والتطور', icon: <User className="w-5 h-5" /> },
   ];
 
   if (API_ENABLED && !sessionReady) {
@@ -526,12 +534,12 @@ export default function App() {
               authToken={session?.token}
             />
           )}
-          {state.tab === 'jr' && (
-            <JournalView state={state} onUpdate={setState} onToast={showToast} />
-          )}
-          {state.tab === 'me' && (
-            <AccountView
+          {(state.tab === 'me' || state.tab === 'jr') && (
+            <ProfileHubView
               state={state}
+              subtab={profileSubtab}
+              onChangeSubtab={setProfileSubtab}
+              onUpdate={setState}
               onReopenCalc={() => setState((prev) => ({ ...prev, ob: 1 }))}
               onResetAll={resetAll}
               onToast={showToast}

@@ -18,6 +18,7 @@ import {
   round1,
 } from '../utils/nutrition';
 import { MealSlotsSummary } from './MealSlotsSummary';
+import { OrderPrepTimeline } from './OrderPrepTimeline';
 import { apiRequest } from '../services/api';
 import { CheckCircle2, Clock, Minus, Plus, Sparkles, Trash2 } from 'lucide-react';
 
@@ -715,110 +716,160 @@ export const CartView: React.FC<CartViewProps> = ({
         </div>
       )}
 
-      {/* My Orders History */}
+      {/* My Orders History & Active Prep Tracking */}
       <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5 space-y-3">
-        <h2 className="text-sm font-bold text-[#f3f1ec]">طلباتي</h2>
+        <h2 className="text-sm font-bold text-[#f3f1ec]">طلباتي وتتبع التحضير</h2>
         {state.ord.length === 0 ? (
           <div className="text-xs text-[#66645e]">لا توجد طلبات مسجّلة بعد.</div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {[...state.ord].reverse().map((o) => (
               <div
                 key={o.id}
-                className="bg-[#18181c] border border-[#232329] rounded-xl p-3 flex items-center justify-between gap-3"
+                className="bg-[#18181c] border border-[#232329] rounded-xl p-3.5 space-y-3"
               >
-                <div>
-                  <div className="text-xs sm:text-sm font-bold text-[#f3f1ec]">
-                    {formatArabicDate(o.date)} · <span className="text-[#96938a] tabular-nums">{o.id}</span>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-[#f3f1ec]">
+                      {formatArabicDate(o.date)} · <span className="text-[#96938a] tabular-nums">{o.id}</span>
+                    </div>
+                    <div className="text-[11px] text-[#96938a] tabular-nums mt-0.5">
+                      {o.n} وجبات · {o.zoneTitle} · {o.kcal} kcal ·{' '}
+                      <b className="text-[#e6d1a3]">{o.total} دج</b>
+                    </div>
+                    <div
+                      className={`text-[11px] font-bold mt-1 flex flex-wrap items-center gap-2 ${
+                        o.status === 'C'
+                          ? 'text-[#6b9c7e]'
+                          : o.status === 'W'
+                            ? 'text-[#c89a56]'
+                            : 'text-[#b86157]'
+                      }`}
+                    >
+                      <span>
+                        {o.status === 'C'
+                          ? apiEnabled ? 'مؤكد لدى NutriFit' : 'مؤكد في سجل المعاينة المحلي'
+                          : o.status === 'W'
+                            ? apiEnabled ? 'قائمة انتظار · بانتظار اعتماد السعة' : 'قائمة انتظار تجريبية'
+                            : 'ملغى'}
+                      </span>
+                      {o.status === 'C' && o.productionStage && (
+                        <>
+                          <span className="text-[#66645e]" aria-hidden="true">·</span>
+                          <span className="text-[#e6d1a3] text-[11px]">
+                            {STAGE_LABELS[o.productionStage] ?? o.productionStage}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-[11px] text-[#96938a] tabular-nums mt-0.5">
-                    {o.n} وجبات · {o.zoneTitle} · {o.kcal} kcal ·{' '}
-                    <b className="text-[#e6d1a3]">{o.total} دج</b>
-                  </div>
-                  <div
-                    className={`text-[11px] font-bold mt-1 flex flex-wrap items-center gap-2 ${
-                      o.status === 'C'
-                        ? 'text-[#6b9c7e]'
-                        : o.status === 'W'
-                          ? 'text-[#c89a56]'
-                          : 'text-[#b86157]'
-                    }`}
-                  >
-                    <span>
-                      {o.status === 'C'
-                        ? apiEnabled ? 'مؤكد لدى NutriFit' : 'مؤكد في سجل المعاينة المحلي'
-                        : o.status === 'W'
-                          ? apiEnabled ? 'قائمة انتظار · بانتظار اعتماد السعة' : 'قائمة انتظار تجريبية'
-                          : 'ملغى'}
-                    </span>
-                    {o.status === 'C' && o.productionStage && (
-                      <>
-                        <span className="text-[#66645e]" aria-hidden="true">·</span>
-                        <span className="text-[#e6d1a3] text-[11px]">
-                          {STAGE_LABELS[o.productionStage] ?? o.productionStage}
-                        </span>
-                      </>
-                    )}
-                  </div>
+                  {o.status !== 'X' && (!o.productionStage || o.productionStage === 'queued') && (
+                    <button
+                      type="button"
+                      onClick={() => void cancelOrder(o)}
+                      className="touch-press min-h-[38px] px-3 py-1.5 rounded-lg border border-[#3d2321] bg-[#1a1111] text-xs font-bold text-[#b86157] cursor-pointer shrink-0"
+                    >
+                      إلغاء
+                    </button>
+                  )}
                 </div>
-                {o.status !== 'X' && (!o.productionStage || o.productionStage === 'queued') && (
-                  <button
-                    type="button"
-                    onClick={() => void cancelOrder(o)}
-                    className="touch-press px-3 py-1.5 rounded-lg border border-[#3d2321] bg-[#1a1111] text-xs font-bold text-[#b86157] cursor-pointer"
-                  >
-                    إلغاء
-                  </button>
-                )}
+
+                {o.status === 'C' && <OrderPrepTimeline order={o} compact />}
               </div>
             ))}
           </div>
         )}
       </div>
 
+      {/* ORDER CLOSURE & SESSION RECAP PANEL */}
       {confirmModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/82 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           onClick={() => setConfirmModal(null)}
         >
           <div
-            className="w-full max-w-md bg-[#111114] border border-[#c8a96e]/50 rounded-2xl p-6 text-center space-y-4 shadow-2xl"
+            className="w-full sm:max-w-lg bg-[#111114] border-t sm:border border-[#c8a96e]/50 rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xl max-h-[92dvh] overflow-y-auto pb-[max(1.25rem,env(safe-area-inset-bottom))]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-center">
-              {confirmModal.status === 'C' ? (
-                <CheckCircle2 className="w-11 h-11 text-[#6b9c7e]" />
-              ) : (
-                <Clock className="w-11 h-11 text-[#c89a56]" />
-              )}
+            <div className="text-center space-y-2">
+              <div className="flex justify-center">
+                {confirmModal.status === 'C' ? (
+                  <CheckCircle2 className="w-11 h-11 text-[#6b9c7e]" />
+                ) : (
+                  <Clock className="w-11 h-11 text-[#c89a56]" />
+                )}
+              </div>
+              <div className="text-[11px] font-medium text-[#c8a96e]">
+                {confirmModal.id} · {formatArabicDate(confirmModal.date)}
+              </div>
+              <h3 className="text-lg font-bold text-[#f3f1ec]">
+                {apiEnabled
+                  ? confirmModal.status === 'C' ? 'تم تسجيل طلبك بنجاح' : 'تم تسجيل طلبك في قائمة الانتظار'
+                  : confirmModal.status === 'C' ? 'تم حفظ طلب المعاينة وإغلاق الجلسة' : 'تم حفظ طلب المعاينة في قائمة الانتظار'}
+              </h3>
+              <p className="text-xs text-[#96938a] leading-relaxed">
+                {apiEnabled
+                  ? confirmModal.status === 'C'
+                    ? 'تم تسجيل الطلب في قاعدة بيانات الخدمة. سيظهر لفريق التشغيل وفق السعة المعتمدة، والدفع نقداً عند الاستلام.'
+                    : 'سُجل الطلب في قائمة الانتظار على الخادم. لا يبدأ التحضير إلا بعد تأكيد الإدارة توفر السعة.'
+                  : confirmModal.status === 'C'
+                    ? 'هذا سجل معاينة محفوظ على هذا الجهاز فقط؛ لم يُرسل إلى المطبخ ولم يُنشأ توصيل فعلي.'
+                    : 'هذه محاكاة محلية لقائمة الانتظار؛ لا توجد خدمة إرسال أو إشعارات للمطبخ.'}
+              </p>
             </div>
-            <h3 className="text-lg font-bold text-[#f3f1ec]">
-              {apiEnabled
-                ? confirmModal.status === 'C' ? 'تم تسجيل طلبك بنجاح' : 'تم تسجيل طلبك في قائمة الانتظار'
-                : confirmModal.status === 'C' ? 'تم حفظ طلب المعاينة' : 'تم حفظ طلب المعاينة في قائمة الانتظار'}
-            </h3>
-            <p className="text-xs text-[#96938a] leading-relaxed">
-              {apiEnabled
-                ? confirmModal.status === 'C'
-                  ? 'تم تسجيل الطلب في قاعدة بيانات الخدمة. سيظهر لفريق التشغيل وفق السعة المعتمدة، وتبقى حالة الدفع نقداً عند الاستلام.'
-                  : 'سُجل الطلب في قائمة الانتظار على الخادم. لا يبدأ التحضير إلا بعد تأكيد الإدارة توفر السعة.'
-                : confirmModal.status === 'C'
-                  ? 'هذا سجل معاينة محفوظ على هذا الجهاز فقط؛ لم يُرسل إلى المطبخ ولم يُنشأ توصيل فعلي.'
-                  : 'هذه محاكاة محلية لقائمة الانتظار؛ لا توجد خدمة إرسال أو إشعارات للمطبخ.'}
-            </p>
-            <div className="bg-[#18181c] border border-[#232329] rounded-xl p-3 text-xs flex justify-between tabular-nums">
-              <span className="text-[#96938a]">رقم الطلب: {confirmModal.id}</span>
-              <span className="text-[#e6d1a3] font-bold">{confirmModal.total} دج</span>
+
+            {/* 5-Stage Prep Timeline */}
+            <div className="bg-[#18181c] border border-[#232329] rounded-xl p-4 space-y-2.5">
+              <div className="text-xs font-bold text-[#f3f1ec]">مسار التحضير والتسليم</div>
+              <OrderPrepTimeline order={confirmModal} />
             </div>
+
+            {/* Transparent Receipt Breakdown */}
+            <div className="bg-[#18181c] border border-[#232329] rounded-xl p-4 space-y-2 text-xs tabular-nums">
+              <div className="flex items-center justify-between pb-2 border-b border-[#232329]">
+                <span className="font-bold text-[#f3f1ec]">ملخص الفاتورة الشفافة</span>
+                <span className="text-[#96938a]">
+                  {confirmModal.n} وجبات · {confirmModal.kcal} kcal · P{confirmModal.p}غ
+                </span>
+              </div>
+              <div className="flex justify-between text-[#96938a]">
+                <span>مكونات بسعر السوق</span>
+                <span className="text-[#f3f1ec]">{confirmModal.ingCost} دج</span>
+              </div>
+              <div className="flex justify-between text-[#96938a]">
+                <span>المناولة المعلنة</span>
+                <span className="text-[#f3f1ec]">{confirmModal.handling} دج</span>
+              </div>
+              <div className="flex justify-between text-[#96938a]">
+                <span>أجر الخدمة</span>
+                <span className="text-[#f3f1ec]">{confirmModal.service} دج</span>
+              </div>
+              <div className="flex justify-between text-[#96938a]">
+                <span>التوصيل ({confirmModal.zoneTitle})</span>
+                <span className="text-[#f3f1ec]">
+                  {confirmModal.zoneFee === 0 ? 'مجاني' : `${confirmModal.zoneFee} دج`}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline pt-2 border-t border-[#232329]">
+                <span className="font-bold text-[#f3f1ec]">الإجمالي</span>
+                <span className="text-lg font-bold text-[#e6d1a3]">{confirmModal.total} دج</span>
+              </div>
+            </div>
+
+            {/* Serene Next-Day Readiness Summary */}
+            <div className="text-xs text-[#96938a] leading-relaxed text-center px-2">
+              خلاصة الغد: خطتك لـ <strong className="text-[#f3f1ec]">{formatArabicDate(confirmModal.date)}</strong> محفوظة وموثقة. يمكنك إغلاق التطبيق الآن أو العودة لمتابعة الحالة.
+            </div>
+
             <button
               type="button"
               onClick={() => {
                 setConfirmModal(null);
                 onNavigate('home');
               }}
-              className="touch-press w-full py-3 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] cursor-pointer"
+              className="touch-press w-full min-h-[48px] py-3 rounded-xl font-bold text-sm text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] cursor-pointer"
             >
-              العودة إلى شاشة اليوم
+              العودة إلى شاشة اليوم وإغلاق المراجعة
             </button>
           </div>
         </div>

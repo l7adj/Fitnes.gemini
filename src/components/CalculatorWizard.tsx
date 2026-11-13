@@ -612,34 +612,34 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </div>
           ) : (
             <>
-              <div className="text-center py-2">
-                <div className="text-xs font-semibold text-[#96938a] mb-2">احتياجك اليومي المستهدف</div>
-                <SvgRing progress={1} size={184} strokeWidth={8} color="#c8a96e" trackColor="#232329">
+              <div className="bg-[#111114] border border-[#232329] rounded-2xl p-5 text-center space-y-4">
+                <div className="text-xs font-semibold text-[#96938a]">احتياجك اليومي المستهدف</div>
+                <SvgRing progress={1} size={180} strokeWidth={7} color="#c8a96e" trackColor="#232329">
                   <div className="text-4xl font-bold text-[#e6d1a3] tabular-nums">
                     {round0(res.kcal)}
                   </div>
-                  <div className="text-xs text-[#96938a]">kcal / يوم</div>
+                  <div className="text-xs text-[#96938a] mt-1">kcal / يوم</div>
                 </SvgRing>
-              </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-[#111114] border border-[#232329] rounded-2xl p-3 text-center">
-                  <div className="text-xl font-bold text-[#f3f1ec] tabular-nums">
-                    {round0(res.P)} غ
+                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#232329]">
+                  <div className="py-1.5 text-center">
+                    <div className="text-lg font-bold text-[#e6d1a3] tabular-nums">
+                      {round0(res.P)} غ
+                    </div>
+                    <div className="text-[11px] text-[#96938a]">بروتين</div>
                   </div>
-                  <div className="text-[11px] text-[#96938a]">بروتين</div>
-                </div>
-                <div className="bg-[#111114] border border-[#232329] rounded-2xl p-3 text-center">
-                  <div className="text-xl font-bold text-[#f3f1ec] tabular-nums">
-                    {round0(res.C)} غ
+                  <div className="py-1.5 text-center border-x border-[#232329]">
+                    <div className="text-lg font-bold text-[#6b9c7e] tabular-nums">
+                      {round0(res.C)} غ
+                    </div>
+                    <div className="text-[11px] text-[#96938a]">كارب</div>
                   </div>
-                  <div className="text-[11px] text-[#96938a]">كارب</div>
-                </div>
-                <div className="bg-[#111114] border border-[#232329] rounded-2xl p-3 text-center">
-                  <div className="text-xl font-bold text-[#f3f1ec] tabular-nums">
-                    {round0(res.F)} غ
+                  <div className="py-1.5 text-center">
+                    <div className="text-lg font-bold text-[#a98c72] tabular-nums">
+                      {round0(res.F)} غ
+                    </div>
+                    <div className="text-[11px] text-[#96938a]">دهون</div>
                   </div>
-                  <div className="text-[11px] text-[#96938a]">دهون</div>
                 </div>
               </div>
 
@@ -647,11 +647,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             </>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2.5 pt-1">
             <button
               type="button"
               onClick={() => setStep(4)}
-              className="touch-press px-4 py-3 rounded-xl bg-[#18181c] border border-[#232329] text-sm font-bold text-[#f3f1ec] cursor-pointer"
+              className="touch-press min-h-[48px] px-5 py-3 rounded-xl bg-[#18181c] border border-[#232329] text-sm font-bold text-[#f3f1ec] cursor-pointer"
             >
               تعديل
             </button>
@@ -659,9 +659,9 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               type="button"
               disabled={Boolean(res.err)}
               onClick={onFinish}
-              className="touch-press flex-1 py-3.5 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] disabled:opacity-40 cursor-pointer"
+              className="touch-press flex-1 min-h-[48px] py-3.5 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] disabled:opacity-40 cursor-pointer"
             >
-              ادخل إلى التطبيق
+              اعتماد الخطة والدخول
             </button>
           </div>
         </div>

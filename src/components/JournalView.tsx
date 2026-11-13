@@ -14,12 +14,14 @@ interface JournalViewProps {
   state: AppState;
   onUpdate: (updater: (prev: AppState) => AppState) => void;
   onToast: (msg: string) => void;
+  embedded?: boolean;
 }
 
 export const JournalView: React.FC<JournalViewProps> = ({
   state,
   onUpdate,
   onToast,
+  embedded = false,
 }) => {
   const [weightInput, setWeightInput] = useState<string>(String(state.w));
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
@@ -117,7 +119,11 @@ export const JournalView: React.FC<JournalViewProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold text-[#f3f1ec]">الجورنال وتطور الجسم</h1>
+        {embedded ? (
+          <h2 className="text-base font-bold text-[#f3f1ec]">سجل الوزن وتطور الجسم</h2>
+        ) : (
+          <h1 className="text-2xl font-bold text-[#f3f1ec]">الجورنال وتطور الجسم</h1>
+        )}
         <div className="flex items-center gap-2 text-xs text-[#96938a]">
           <span>الوزن المستهدف:</span>
           <input
