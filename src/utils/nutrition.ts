@@ -270,10 +270,9 @@ export function calcNutrition(state: AppState): CalcResult {
     };
   }
 
-  const C = Math.max(60, rawC);
-  if (rawC < 60) {
-    warn.push('تم تطبيق الحد الأدنى للكاربوهيدرات (60 غ يوميًا) للحفاظ على الوظائف الأساسية.');
-  }
+  // Carbohydrate is the energy remainder. Never clamp it: doing so would
+  // silently increase the prescribed calories beyond the stated energy target.
+  const C = rawC;
   const cg = C / state.w;
   if (cg < 3) {
     warn.push('الكارب منخفض نسبيًا لرياضي؛ راقب جودة الأداء أثناء الحصص.');
@@ -282,7 +281,8 @@ export function calcNutrition(state: AppState): CalcResult {
   }
 
   const sc = state.sup ? Math.min(state.supg, 0.5 * P) : 0;
-  const sp = state.sup && P > 0 ? (state.supg / P) * 100 : 0;
+  // Classify the amount actually credited to the daily protein target.
+  const sp = P > 0 ? (sc / P) * 100 : 0;
   const ev =
     sp <= 20
       ? 'مكمل خفيف'
