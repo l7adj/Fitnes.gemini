@@ -172,8 +172,15 @@ export default function App() {
   const handleAuthenticated = async (nextSession: ApiSession) => {
     localStorage.setItem('nf_auth_token', nextSession.token);
     setSession(nextSession);
-    await hydrateRemoteWorkspace(nextSession.token, nextSession.user);
-    setSessionReady(true);
+    try {
+      await hydrateRemoteWorkspace(nextSession.token, nextSession.user);
+      setSessionReady(true);
+    } catch (error) {
+      localStorage.removeItem('nf_auth_token');
+      setSession(null);
+      setSessionReady(true);
+      throw error;
+    }
   };
 
   const logout = () => {
