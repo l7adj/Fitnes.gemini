@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createInitialState, STATE_VERSION } from './data/seed';
 import { AppState, AppTab } from './types';
 import { GlobalStatusBar } from './components/GlobalStatusBar';
+import { WelcomeView } from './components/WelcomeView';
 import { CalculatorWizard } from './components/CalculatorWizard';
 import { TodayView } from './components/TodayView';
 import { MenuView } from './components/MenuView';
@@ -59,6 +60,7 @@ function loadState(): AppState {
 
 export default function App() {
   const [state, setState] = useState<AppState>(loadState);
+  const [showWelcome, setShowWelcome] = useState(() => state.ob === 0);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [pickerRequest, setPickerRequest] = useState<{ slot: number; seq: number } | null>(null);
 
@@ -132,18 +134,11 @@ export default function App() {
 
   // Onboarding / Scientific Calculator Wizard
   if (state.ob < 6 && state.tab !== 'admin') {
+    if (showWelcome) {
+      return <WelcomeView onStart={() => setShowWelcome(false)} />;
+    }
     return (
       <div className="min-h-screen">
-        <div className="max-w-xl mx-auto px-4 pt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={enterOwnerWorkspace}
-            className="text-xs font-bold text-[#c9a85c] hover:underline flex items-center gap-1.5 cursor-pointer"
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>واجهة المالك</span>
-          </button>
-        </div>
         <CalculatorWizard
           state={state}
           onUpdate={setState}
