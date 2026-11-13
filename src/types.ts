@@ -135,6 +135,7 @@ export interface AppState {
   targetWeight: number;
   lbm: number;
   rel: number;
+  lbmMethod?: 'none' | 'dexa' | 'inbody' | 'other';
   band: ActivityBand;
   pal: number;
   goal: GoalType;
