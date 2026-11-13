@@ -40,9 +40,9 @@ export const CartView: React.FC<CartViewProps> = ({
   const totals = calcCartTotals(state);
   const pricingCfg = state.pricingConfig || DEFAULT_PRICING;
   const dlv = getNextDelivery(pricingCfg.cutoffHour);
-  const selectedZone = getSelectedZone(state);
   const activeZones = state.zones.filter((z) => z.active);
-  const zoneOptions = activeZones.length > 0 ? activeZones : state.zones;
+  const selectedZone = activeZones.find((z) => z.id === state.zoneId) ?? activeZones[0] ?? getSelectedZone(state);
+  const zoneOptions = activeZones;
   const pricing = calcCartPrice(totals.price, state.n, selectedZone.fee, pricingCfg);
 
   if (res.err) {
@@ -86,6 +86,14 @@ export const CartView: React.FC<CartViewProps> = ({
   const handlePlaceOrder = () => {
     if (!state.name.trim()) {
       onToast('أدخل الاسم أو اللقب في ملفك قبل حفظ الطلب');
+      return;
+    }
+    if (activeZones.length === 0) {
+      onToast('لا توجد منطقة خدمة معتمدة بعد؛ لا يمكن حفظ طلب توصيل حتى يحددها المسؤول');
+      return;
+    }
+    if (!selectedZone.active) {
+      onToast('اختر منطقة خدمة معتمدة قبل المتابعة');
       return;
     }
     if (state.meals.length === 0) {
@@ -492,7 +500,11 @@ export const CartView: React.FC<CartViewProps> = ({
               <div>
                 <div className="text-sm font-bold text-[#f3f1ec] mb-2">منطقة التوصيل أو الاستلام</div>
                 <div className="space-y-2">
-                  {zoneOptions.map((z) => {
+                  {zoneOptions.length === 0 ? (
+                    <div className="rounded-xl border border-[#c45d51]/40 bg-[#241513] p-3 text-xs leading-6 text-[#e6b4aa]">
+                      لا توجد حالياً منطقة توصيل أو نقطة استلام معتمدة. يمكنك مواصلة معاينة الوجبات، لكن تأكيد الطلب متوقف حتى اعتماد نطاق الخدمة.
+                    </div>
+                  ) : zoneOptions.map((z) => {
                     const active = selectedZone.id === z.id;
                     return (
                       <button
@@ -570,14 +582,15 @@ export const CartView: React.FC<CartViewProps> = ({
               </div>
 
               <div className="text-[11px] text-[#9b988d]">
-                الدفع عند الاستلام · موعد التوصيل: <b className="text-[#f3f1ec]">{formatArabicDate(dlv.date)}</b>
+                <span className="text-[#d4a24c]">موعد تجريبي غير محجوز:</span> {formatArabicDate(dlv.date)}
                 {dlv.closedToday && ` (تم تجاوز ${cutoffLabel}، يُرحّل للغد التالي)`}
               </div>
 
               <button
                 type="button"
                 onClick={handlePlaceOrder}
-                className="w-full py-3.5 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e5cf94] to-[#c9a85c] hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
+                disabled={activeZones.length === 0}
+                className="w-full py-3.5 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e5cf94] to-[#c9a85c] hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
               >
                 تأكيد الطلب ({pricing.total} دج)
               </button>
