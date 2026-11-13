@@ -21,6 +21,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
   const [foods,setFoods] = useState<any[]>([]);
   const [zones,setZones] = useState<any[]>([]);
   const [dishes,setDishes] = useState<any[]>([]);
+  const [staff,setStaff] = useState<any[]>([]);
   const [settings,setSettings] = useState<any>({handling_pct:7,service_fee_per_meal:200,cutoff_hour:16,daily_capacity_boxes:0});
   const [loading,setLoading] = useState(true);
   const [busy,setBusy] = useState(false);
@@ -53,15 +54,17 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
         setOrders(data.orders);
       }
       if (isAdmin) {
-        const [foodData,zoneData,dishData,settingsData] = await Promise.all([
+        const [foodData,zoneData,dishData,settingsData,staffData] = await Promise.all([
           apiRequest<{foods:any[]}>('/api/admin/foods',session.token),
           apiRequest<{zones:any[]}>('/api/admin/zones',session.token),
           apiRequest<{dishes:any[]}>('/api/admin/dishes',session.token),
           apiRequest<{settings:any}>('/api/admin/settings',session.token),
+          apiRequest<{staff:any[]}>('/api/admin/staff',session.token),
         ]);
         setFoods(foodData.foods);
         setZones(zoneData.zones);
         setDishes(dishData.dishes);
+        setStaff(staffData.staff);
         if (settingsData.settings) setSettings(settingsData.settings);
       }
     } catch (err) {
@@ -245,8 +248,11 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
                   <div className="flex flex-wrap gap-2 border-t border-[#292d25] pt-3">
                     {order.order_status==='waitlisted' && <button onClick={()=>void confirmWaitlist(order)} disabled={busy} className="rounded-lg bg-[#c9a85c] px-3 py-2 text-[11px] font-bold text-[#17140d] disabled:opacity-40">تأكيد من قائمة الانتظار</button>}
                     {order.order_status==='confirmed' && <>
-                      <input value={driverIds[order.id]??''} onChange={(e)=>setDriverIds((prev)=>({...prev,[order.id]:e.target.value}))}
-                        placeholder="معرّف حساب الموصّل (UUID)" className="min-w-0 flex-1 rounded-lg border border-[#34372e] bg-[#0c100d] px-3 py-2 text-[11px]"/>
+                      <select value={driverIds[order.id]??''} onChange={(e)=>setDriverIds((prev)=>({...prev,[order.id]:e.target.value}))}
+                        className="min-w-0 flex-1 rounded-lg border border-[#34372e] bg-[#0c100d] px-3 py-2 text-[11px]">
+                        <option value="">اختر الموصّل</option>
+                        {staff.filter((person)=>person.role==='delivery').map((person)=><option key={person.id} value={person.id}>{person.name} · {person.email}</option>)}
+                      </select>
                       <button onClick={()=>void assignDriver(order)} disabled={busy || !driverIds[order.id]}
                         className="rounded-lg border border-[#c9a85c]/40 px-3 py-2 text-[11px] text-[#e5cf94] disabled:opacity-40">إسناد التوصيل</button>
                     </>}
