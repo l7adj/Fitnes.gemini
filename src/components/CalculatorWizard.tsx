@@ -331,15 +331,38 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               onChange={(lbm) => onUpdate((prev) => ({ ...prev, lbm }))}
             />
             {state.lbm > 0 && (
-              <Stepper
-                label="موثوقية القياس"
-                value={state.rel}
-                unit="%"
-                step={5}
-                min={0}
-                max={100}
-                onChange={(rel) => onUpdate((prev) => ({ ...prev, rel }))}
-              />
+              <>
+                <div className="mt-2">
+                  <label className="text-xs text-[#a8a493]">طريقة قياس LBM</label>
+                  <select
+                    value={state.lbmMethod ?? 'none'}
+                    onChange={(e) => onUpdate((prev) => ({
+                      ...prev,
+                      lbmMethod: e.target.value as 'none' | 'dexa' | 'inbody' | 'other',
+                    }))}
+                    className="mt-1 w-full rounded-xl border border-[#2b3322] bg-[#111411] px-3 py-2.5 text-xs text-[#f4f1e6]"
+                  >
+                    <option value="none">لم أحدد / غير موثق</option>
+                    <option value="dexa">DEXA</option>
+                    <option value="inbody">InBody</option>
+                    <option value="other">قياس آخر موثق</option>
+                  </select>
+                </div>
+                <Stepper
+                  label="موثوقية القياس"
+                  value={state.rel}
+                  unit="%"
+                  step={5}
+                  min={0}
+                  max={100}
+                  onChange={(rel) => onUpdate((prev) => ({ ...prev, rel }))}
+                />
+                {(!state.lbmMethod || state.lbmMethod === 'none' || state.rel < 70) && (
+                  <p className="text-[10px] leading-5 text-[#d4a24c]">
+                    ستُستخدم معادلة Mifflin حتى توثّق طريقة قياس LBM وتكون موثوقيتها 70% فأكثر.
+                  </p>
+                )}
+              </>
             )}
           </div>
 
