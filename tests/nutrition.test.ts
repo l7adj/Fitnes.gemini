@@ -74,3 +74,15 @@ test('unreliable lean-mass measurements fall back to Mifflin with an explicit wa
   assert.equal(result.kat, false);
   assert.ok(result.warn.some((warning) => warning.includes('موثوقية القياس أقل من 70%')));
 });
+
+test('new customer journal starts empty and never displays invented weight history', () => {
+  const state = createInitialState();
+  assert.deepEqual(state.jr, []);
+  assert.deepEqual(state.photos, []);
+});
+
+test('seed delivery zones are all inactive until real coverage is approved', () => {
+  const state = createInitialState();
+  assert.ok(state.zones.length > 0);
+  assert.equal(state.zones.some((zone) => zone.active), false);
+});
