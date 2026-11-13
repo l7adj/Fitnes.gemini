@@ -290,9 +290,7 @@ export default function App() {
           {state.tab === 'me' && (
             <AccountView
               state={state}
-              onUpdate={setState}
               onReopenCalc={() => setState((prev) => ({ ...prev, ob: 1 }))}
-              onNavigate={navigate}
               onResetAll={resetAll}
               onToast={showToast}
             />
