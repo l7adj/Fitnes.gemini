@@ -281,18 +281,20 @@ export function calcNutrition(state: AppState): CalcResult {
   }
 
   const sc = state.sup ? Math.min(state.supg, 0.5 * P) : 0;
-  // Classify the amount actually credited to the daily protein target.
+  // Classify the amount actually credited, while retaining whether the
+  // requested supplement amount exceeded the operational 50% ceiling.
+  const requestedSp = P > 0 ? (state.supg / P) * 100 : 0;
   const sp = P > 0 ? (sc / P) * 100 : 0;
   const ev =
-    sp <= 20
-      ? 'مكمل خفيف'
-      : sp <= 30
-        ? 'توازن مثالي'
-        : sp <= 40
-          ? 'مقبول'
-          : sp <= 50
-            ? 'مرتفع'
-            : 'مقصوص لسقف 50%';
+    requestedSp > 50
+      ? 'تم تحديده بسقف 50%'
+      : sp <= 20
+        ? 'مكمل خفيف'
+        : sp <= 30
+          ? 'توازن مثالي'
+          : sp <= 40
+            ? 'مقبول'
+            : 'مرتفع';
   const fp = Math.max(0, P - sc);
 
   return {
