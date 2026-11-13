@@ -37,6 +37,10 @@ function loadState(): AppState {
         return {
           ...defaults,
           ...parsed,
+          // The local prototype has no server-side identity provider. Never
+          // restore an operator session or expose the admin route to customers.
+          tab: parsed.tab === 'admin' ? 'home' : parsed.tab,
+          adminMode: false,
           zones:
             Array.isArray(parsed.zones) && parsed.zones.length > 0
               ? parsed.zones
@@ -151,7 +155,7 @@ export default function App() {
   }
 
   // DEDICATED OWNER WORKSPACE (Completely separate interface from Client App)
-  if (state.tab === 'admin') {
+  if (import.meta.env.DEV && state.tab === 'admin') {
     return (
       <div className="min-h-screen pb-12">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-4">
@@ -184,19 +188,20 @@ export default function App() {
     <div className="min-h-screen pb-24 lg:pb-10">
       <GlobalStatusBar state={state} />
 
-      {/* Top Subtle Role Strip for instant switching to Owner Interface */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-3 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-3">
         <span className="text-[11px] font-semibold text-[#6d6b62]">
           NutriFit DZ · بوابة العميل
         </span>
-        <button
-          type="button"
-          onClick={enterOwnerWorkspace}
-          className="px-3 py-1.5 rounded-lg bg-[#111411] border border-[#252823] hover:border-[#c9a85c]/60 text-[11px] font-bold text-[#c9a85c] flex items-center gap-1.5 cursor-pointer"
-        >
-          <Sliders className="w-3.5 h-3.5" />
-          <span>واجهة المالك</span>
-        </button>
+        {import.meta.env.DEV && (
+          <button
+            type="button"
+            onClick={enterOwnerWorkspace}
+            className="float-left px-3 py-1.5 rounded-lg bg-[#111411] border border-[#252823] hover:border-[#c9a85c]/60 text-[11px] font-bold text-[#c9a85c] flex items-center gap-1.5 cursor-pointer"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>واجهة المالك · معاينة تطوير</span>
+          </button>
+        )}
       </div>
 
       <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-3 lg:flex lg:gap-6 lg:items-start">
@@ -237,16 +242,18 @@ export default function App() {
             );
           })}
 
-          <div className="pt-2 mt-2 border-t border-[#222520]">
-            <button
-              type="button"
-              onClick={enterOwnerWorkspace}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#c9a85c] hover:bg-[#171a16] transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <Sliders className="w-4 h-4" />
-              <span>واجهة المالك الخاصة</span>
-            </button>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="pt-2 mt-2 border-t border-[#222520]">
+              <button
+                type="button"
+                onClick={enterOwnerWorkspace}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#c9a85c] hover:bg-[#171a16] transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <Sliders className="w-4 h-4" />
+                <span>واجهة المالك · معاينة تطوير</span>
+              </button>
+            </div>
+          )}
         </aside>
 
         {/* Main Screen Workspace */}
