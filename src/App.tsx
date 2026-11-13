@@ -212,7 +212,7 @@ export default function App() {
               NutriFit DZ
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5">
-              الشراقة · مطبخ رياضي خاص
+              معاينة تغذية رياضية مخصصة
             </div>
           </div>
 
