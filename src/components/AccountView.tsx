@@ -48,6 +48,11 @@ export const AccountView: React.FC<AccountViewProps> = ({
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-[#f3f1ec]">الحساب والملف الغذائي</h1>
 
+      <div className="rounded-xl border border-[#d4a24c]/25 bg-[#241e12]/60 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]">
+        <strong className="text-[#e5cf94]">خصوصية البيانات:</strong>
+        يُحفظ هذا الملف حالياً في تخزين المتصفح على هذا الجهاز فقط، بما فيه قياسات الجسم وإجابات بوابة السلامة. لا تستخدم جهازاً مشتركاً، ولا توجد مزامنة سحابية أو حساب محمي في نسخة المعاينة.
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Left: Profile + Scientific Calculator Equations */}
         <div className="lg:col-span-7 space-y-4">
