@@ -7,6 +7,7 @@ import {
   DishItem,
   FoodCategory,
   FoodItem,
+  Order,
 } from '../types';
 import { compressProgressImage } from '../utils/image';
 import { CATEGORY_LABELS, getDishImage, getFoodImage } from '../utils/media';
