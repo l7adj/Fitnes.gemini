@@ -99,19 +99,19 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 التوصيل القادم: {formatArabicDate(dlv.date)}
               </div>
               <div className="text-xs text-[#9b988d] mt-0.5">
-                07:00–08:30 صباحًا · استلام مجاني من المطبخ 06:30–08:00
+                نافذة التسليم ونقطة الاستلام تُحددان بعد اعتماد منطقة الخدمة
               </div>
             </div>
             <div className="text-left shrink-0">
               {dlv.closedToday ? (
                 <div className="text-xs font-bold text-[#c45d51]">
-                  أُغلق طلب الغد ({cutoffLabel})
+                  انتهت نافذة الطلب التجريبية ({cutoffLabel})
                 </div>
               ) : (
                 <div>
                   <div className="text-[11px] text-[#9b988d] flex items-center justify-end gap-1">
                     <Clock className="w-3.5 h-3.5 text-[#c9a85c]" />
-                    إغلاق الطلبات ({cutoffLabel})
+                    موعد إغلاق تجريبي ({cutoffLabel})
                   </div>
                   <div className="text-sm font-bold text-[#e5cf94] tabular-nums">
                     {hoursLeft}س {minsLeft}د
