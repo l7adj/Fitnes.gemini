@@ -329,7 +329,7 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
 app.get('/api/orders', authRequired, requireRole('customer'), asyncRoute(async (req,res) => {
   const auth = (req as AuthRequest).auth!;
   const result = await pool.query(
-    "SELECT id,order_number,delivery_date,delivery_zone_title,meal_count,total_dzd,order_status,production_stage,payment_status,created_at FROM customer_orders WHERE customer_id=$1 ORDER BY created_at DESC LIMIT 100",
+    "SELECT id,order_number,delivery_date,delivery_zone_title,delivery_fee_dzd,meal_count,customer_note,ingredient_cost_dzd,handling_fee_dzd,service_fee_dzd,total_dzd,kcal_total,protein_total,carbs_total,fat_total,order_status,production_stage,payment_status,created_at FROM customer_orders WHERE customer_id=$1 ORDER BY created_at DESC LIMIT 100",
     [auth.id]
   );
   const ids = result.rows.map((x) => x.id);
