@@ -256,7 +256,7 @@ export function createInitialState(): AppState {
     lbm: 0,
     rel: 0,
     band: 'A',
-    pal: 1.85,
+    pal: 1.7,
     goal: 'recomp',
     pct: -10,
     al: [],
