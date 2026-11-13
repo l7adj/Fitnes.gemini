@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS customer_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_number TEXT NOT NULL UNIQUE,
   customer_id UUID NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
+  delivery_user_id UUID REFERENCES app_users(id) ON DELETE SET NULL,
   delivery_date DATE NOT NULL,
   delivery_zone_id UUID NOT NULL REFERENCES delivery_zones(id) ON DELETE RESTRICT,
   delivery_zone_title TEXT NOT NULL,
@@ -159,3 +160,5 @@ CREATE INDEX IF NOT EXISTS idx_orders_delivery_status ON customer_orders(deliver
 CREATE INDEX IF NOT EXISTS idx_orders_production ON customer_orders(production_stage, delivery_date);
 CREATE INDEX IF NOT EXISTS idx_foods_active_verified ON foods(active, nutrition_verified);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_log(entity_type, entity_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_orders_delivery_user ON customer_orders(delivery_user_id,delivery_date);
