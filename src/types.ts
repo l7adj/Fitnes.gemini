@@ -31,6 +31,9 @@ export interface FoodItem {
   price: number; // DZD per 100g or 100ml
   al: AllergenKey[];
   available?: boolean;
+  nutritionDataStatus?: 'verified' | 'unverified';
+  nutritionBasis?: 'raw' | 'cooked' | 'as_sold' | 'unspecified';
+  nutritionSource?: string;
 }
 
 export interface DishItem {
