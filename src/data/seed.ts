@@ -209,7 +209,14 @@ export function seedFoods(): FoodItem[] {
     { id: 'j_str', emoji: '🍓', name: 'سموذي فراولة', cat: 'juice', unitLabel: '100مل', per100: { kcal: 42, p: 0.8, c: 9.6, f: 0.3, fiber: 1.4 }, price: 30, al: [], available: true },
     { id: 'j_avc', emoji: '🥑', name: 'سموذي أفوكادو', cat: 'juice', unitLabel: '100مل', per100: { kcal: 112, p: 2.1, c: 8.5, f: 8.2, fiber: 3.1 }, price: 42, al: [], available: true },
     { id: 'j_lem', emoji: '🍋', name: 'ليمونادة طازجة بالنعناع', cat: 'juice', unitLabel: '100مل', per100: { kcal: 28, p: 0.3, c: 7.2, f: 0.1, fiber: 0.2 }, price: 18, al: [], available: true },
-  ];
+  ].map((food) => ({
+    ...food,
+    // Seed values are illustrative until each ingredient is linked to a
+    // traceable source, preparation state and verified edible-portion record.
+    nutritionDataStatus: 'unverified' as const,
+    nutritionBasis: 'unspecified' as const,
+    nutritionSource: 'TODO_VERIFY',
+  }));
 }
 
 export function seedDishes(): DishItem[] {
