@@ -108,6 +108,13 @@ export const AdminView: React.FC<AdminViewProps> = ({
       onToast('أدخل اسم المنتج');
       return;
     }
+    if (
+      editingFood.nutritionDataStatus === 'verified' &&
+      (!editingFood.nutritionSource?.trim() || !editingFood.nutritionBasis || editingFood.nutritionBasis === 'unspecified')
+    ) {
+      onToast('لا يمكن اعتماد القيم قبل إدخال مصدر غذائي وحالة الوزن (نيء/مطبوخ/كما يباع)');
+      return;
+    }
     onUpdate((prev) => ({
       ...prev,
       foods: isNewFood
@@ -321,6 +328,9 @@ export const AdminView: React.FC<AdminViewProps> = ({
                     price: 50,
                     al: [],
                     available: true,
+                    nutritionDataStatus: 'unverified',
+                    nutritionBasis: 'unspecified',
+                    nutritionSource: 'TODO_VERIFY',
                   });
                 }}
                 className="px-4 py-2 rounded-xl font-bold text-xs text-[#141108] bg-gradient-to-l from-[#e5cf94] to-[#c9a85c] flex items-center gap-1 cursor-pointer shrink-0"
@@ -1021,6 +1031,56 @@ export const AdminView: React.FC<AdminViewProps> = ({
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-[#252823] bg-[#171a16] p-3 space-y-2.5">
+              <div>
+                <div className="text-xs font-bold text-[#e5cf94]">توثيق القيم الغذائية</div>
+                <p className="mt-1 text-[10px] leading-5 text-[#9b988d]">
+                  لا تعتمد أي قيمة قبل تحديد مرجعها وحالة الطعام التي تنطبق عليها.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-[#9b988d]">حالة التوثيق</label>
+                  <select
+                    value={editingFood.nutritionDataStatus ?? 'unverified'}
+                    onChange={(e) => setEditingFood({
+                      ...editingFood,
+                      nutritionDataStatus: e.target.value as 'verified' | 'unverified',
+                    })}
+                    className="mt-1 w-full rounded-lg border border-[#252823] bg-[#111411] px-2 py-2 text-xs text-[#f3f1ec]"
+                  >
+                    <option value="unverified">غير موثق</option>
+                    <option value="verified">موثق</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-[#9b988d]">حالة الوزن</label>
+                  <select
+                    value={editingFood.nutritionBasis ?? 'unspecified'}
+                    onChange={(e) => setEditingFood({
+                      ...editingFood,
+                      nutritionBasis: e.target.value as 'raw' | 'cooked' | 'as_sold' | 'unspecified',
+                    })}
+                    className="mt-1 w-full rounded-lg border border-[#252823] bg-[#111411] px-2 py-2 text-xs text-[#f3f1ec]"
+                  >
+                    <option value="unspecified">غير محدد</option>
+                    <option value="raw">نيء</option>
+                    <option value="cooked">مطبوخ</option>
+                    <option value="as_sold">كما يباع</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-[#9b988d]">المصدر / رقم السجل</label>
+                <input
+                  value={editingFood.nutritionSource ?? ''}
+                  onChange={(e) => setEditingFood({ ...editingFood, nutritionSource: e.target.value })}
+                  placeholder="مثال: USDA FoodData Central · FDC ID ..."
+                  className="mt-1 w-full rounded-lg border border-[#252823] bg-[#111411] px-3 py-2 text-xs text-[#f3f1ec]"
+                />
               </div>
             </div>
 
