@@ -937,6 +937,10 @@ export const MenuView: React.FC<MenuViewProps> = ({
   // ============================================================================
   return (
     <div className="space-y-5">
+      <div className="rounded-xl border border-[#d4a24c]/30 bg-[#241e12]/70 px-4 py-3 text-[11px] leading-6 text-[#d8cba9]" role="note">
+        <strong className="text-[#e5cf94]">شفافية البيانات:</strong>
+        القيم الغذائية والأسعار في قاعدة المعاينة أولية وغير موثقة بعد بمصدر غذائي لكل مكوّن أو بحالة الوزن (نيء/مطبوخ). لا تعتمد عليها كبيانات تشغيل أو كملصق غذائي نهائي.
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-[#f3f1ec]">قائمة وجباتك المخصصة</h1>
