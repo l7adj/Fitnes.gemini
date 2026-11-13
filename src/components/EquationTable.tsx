@@ -53,7 +53,14 @@ export const EquationTable: React.FC<EquationTableProps> = ({ state, result }) =
           <div>
             <div className="text-[#f3f1ec] font-semibold">
               الاحتياج اليومي الكلي (TDEE)
-              <Tag code="R" title="نطاق مرجعي FAO/WHO/UNU 2004" /><Tag code="O" title="معامل النشاط المحدد داخل النطاق" />
+              {state.band === 'S' ? (
+                <Tag code="C" title="نطاق خمول منخفض جداً افتراض تشغيلي يحتاج معايرة؛ ليس من نطاقات PAL المرجعية المعتمدة هنا" />
+              ) : (
+                <>
+                  <Tag code="R" title="نطاق مرجعي FAO/WHO/UNU 2004" />
+                  <Tag code="O" title="معامل النشاط المحدد داخل النطاق" />
+                </>
+              )}
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5 tabular-nums">
               {round0(result.bmr)} × معامل النشاط {state.pal.toFixed(2)}
