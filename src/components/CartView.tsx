@@ -18,6 +18,7 @@ import {
   round1,
 } from '../utils/nutrition';
 import { MealSlotsSummary } from './MealSlotsSummary';
+import { apiRequest } from '../services/api';
 import { CheckCircle2, Clock, Minus, Plus, Sparkles, Trash2 } from 'lucide-react';
 
 interface CartViewProps {
@@ -26,6 +27,8 @@ interface CartViewProps {
   onNavigate: (tab: AppTab) => void;
   onSelectMealSlot: (slotIdx: number) => void;
   onToast: (msg: string, undo?: () => void) => void;
+  apiEnabled?: boolean;
+  authToken?: string;
 }
 
 export const CartView: React.FC<CartViewProps> = ({
@@ -34,6 +37,8 @@ export const CartView: React.FC<CartViewProps> = ({
   onNavigate,
   onSelectMealSlot,
   onToast,
+  apiEnabled = false,
+  authToken,
 }) => {
   const [confirmModal, setConfirmModal] = useState<Order | null>(null);
   const res = calcNutrition(state);
@@ -83,7 +88,7 @@ export const CartView: React.FC<CartViewProps> = ({
     });
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!state.name.trim()) {
       onToast('أدخل الاسم أو اللقب في ملفك قبل حفظ الطلب');
       return;
@@ -212,13 +217,53 @@ export const CartView: React.FC<CartViewProps> = ({
       items,
     };
 
+    let orderToSave = newOrder;
+    if (apiEnabled) {
+      if (!authToken) {
+        onToast('انتهت جلسة الدخول؛ سجّل الدخول مجدداً.');
+        return;
+      }
+      try {
+        const response = await apiRequest<{ order: {
+          id: string; order_number: string; delivery_date: string; order_status: string;
+          total_dzd: number | string; production_stage: Order['productionStage'];
+        } }>('/api/orders', authToken, {
+          method: 'POST',
+          body: JSON.stringify({
+            zoneId: selectedZone.id,
+            mealCount: state.n,
+            note: state.orderNote.trim(),
+            items: state.meals.map((item) => ({
+              kind: item.kind,
+              id: item.id,
+              grams: item.grams,
+              multiplier: item.mult ?? 1,
+              slot: clamp(item.slot || 0, 0, state.n - 1),
+              slotName: getMealSlotName(state, clamp(item.slot || 0, 0, state.n - 1)),
+            })),
+          }),
+        });
+        orderToSave = {
+          ...newOrder,
+          id: response.order.id,
+          date: String(response.order.delivery_date).slice(0, 10),
+          total: Number(response.order.total_dzd),
+          status: response.order.order_status === 'confirmed' ? 'C' : 'W',
+          productionStage: response.order.production_stage ?? undefined,
+        };
+      } catch (error) {
+        onToast(error instanceof Error ? error.message : 'تعذر إرسال الطلب إلى الخادم.');
+        return;
+      }
+    }
+
     onUpdate((prev) => ({
       ...prev,
-      ord: [...prev.ord, newOrder],
+      ord: [...prev.ord, orderToSave],
       meals: [],
       orderNote: '',
     }));
-    setConfirmModal(newOrder);
+    setConfirmModal(orderToSave);
   };
 
   const cutoffLabel = `${String(dlv.cutoffHour).padStart(2, '0')}:00`;
