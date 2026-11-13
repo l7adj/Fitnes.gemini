@@ -288,7 +288,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({session,onLogout}
                   {(['gluten','eggs','fish','milk','nuts'] as string[]).map((key)=>(
                     <label key={key} className="flex items-center gap-1.5">
                       <input type="checkbox" checked={food.allergens.includes(key)} onChange={(e)=>setFood({...food,allergens:e.target.checked?[...food.allergens,key]:food.allergens.filter((x:string)=>x!==key)})}/>
-                      {{gluten:'غلوتين',eggs:'بيض',fish:'سمك',milk:'حليب',nuts:'مكسرات'} as Record<string,string>}[key]
+                      {({gluten:'غلوتين',eggs:'بيض',fish:'سمك',milk:'حليب',nuts:'مكسرات'} as Record<string,string>)[key]}
                     </label>
                   ))}
                 </div>
