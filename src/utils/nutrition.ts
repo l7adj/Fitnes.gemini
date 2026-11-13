@@ -183,6 +183,51 @@ export function calcNutrition(state: AppState): CalcResult {
     };
   }
 
+  const palRange = ACTIVITY_BANDS[state.band];
+  if (state.pal < palRange.min || state.pal > palRange.max) {
+    return {
+      err: `معامل النشاط ${state.pal.toFixed(2)} خارج نطاق ${palRange.min.toFixed(2)}–${palRange.max.toFixed(2)} للنشاط المحدد.`,
+      kat: false,
+      bmi,
+      bmr: 0,
+      tdee: 0,
+      kcal: 0,
+      P: 0,
+      F: 0,
+      C: 0,
+      fiber: 25,
+      pg: 0,
+      cg: 0,
+      sc: 0,
+      sp: 0,
+      ev: '',
+      fp: 0,
+      warn: [],
+    };
+  }
+
+  if (state.lbm > state.w || state.rel < 0 || state.rel > 100) {
+    return {
+      err: 'تحقق من قياس الكتلة الخالية من الدهون وموثوقيته؛ يجب ألا تتجاوز LBM وزن الجسم، والموثوقية بين 0 و100%.',
+      kat: false,
+      bmi,
+      bmr: 0,
+      tdee: 0,
+      kcal: 0,
+      P: 0,
+      F: 0,
+      C: 0,
+      fiber: 25,
+      pg: 0,
+      cg: 0,
+      sc: 0,
+      sp: 0,
+      ev: '',
+      fp: 0,
+      warn: [],
+    };
+  }
+
   if (state.pct < -25 || state.pct > 25) {
     return {
       err: 'نطاق الفائض أو العجز المسموح به هو بين −25% و+25% فقط.',
@@ -235,6 +280,9 @@ export function calcNutrition(state: AppState): CalcResult {
   }
 
   const warn: string[] = [];
+  if (state.lbm > 0 && state.rel < 70) {
+    warn.push('لم تُستخدم قيمة LBM لأن موثوقية القياس أقل من 70%؛ استُخدمت معادلة Mifflin-St Jeor.');
+  }
   if (state.pct < -20) {
     warn.push('عجز أكبر من 20%: يُنصح به لفترات قصيرة ومراقبة دقيقة فقط.');
   }
