@@ -112,7 +112,7 @@ export const EquationTable: React.FC<EquationTableProps> = ({ state, result }) =
         <div className="py-2.5 flex items-start justify-between gap-3">
           <div>
             <div className="text-[#f3f1ec] font-semibold">
-              الكاربوهيدرات (باقي الطاقة · حد أدنى 60غ)
+              الكربوهيدرات (باقي الطاقة بعد البروتين والدهون)
               <Tag code="R" title="مرجع ACSM 2016" />
             </div>
             <div className="text-[11px] text-[#9b988d] mt-0.5 tabular-nums">
