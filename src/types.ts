@@ -101,6 +101,7 @@ export interface Order {
   c: number;
   f: number;
   status: 'C' | 'W' | 'X';
+  productionStage?: 'queued' | 'preparing' | 'packed' | 'out_for_delivery' | 'delivered';
   items: OrderItemSnapshot[];
 }
 
