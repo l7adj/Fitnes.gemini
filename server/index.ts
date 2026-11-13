@@ -170,12 +170,15 @@ app.put('/api/profile', authRequired, requireRole('customer'), asyncRoute(async 
   const palValid = Boolean(band && pal !== null && pal >= palRanges[band][0] && pal <= palRanges[band][1]);
   const goal = ['bulk','cut','recomp','perf'].includes(b.goal) ? b.goal : null;
   const adjustment = bounded(b.goalAdjustmentPct,-25,25);
+  const healthFlags = b.healthFlags && typeof b.healthFlags === 'object' && !Array.isArray(b.healthFlags) ? b.healthFlags : {};
+  const healthFlagKeys = ['preg','kid','dia','ed'];
+  const healthFlagsValid = healthFlagKeys.every((key) => typeof healthFlags[key] === 'boolean');
   const rawLbm = b.lbmKg === null || b.lbmKg === undefined || Number(b.lbmKg) === 0 ? null : bounded(b.lbmKg,1,300);
   const reliability = b.lbmReliabilityPct === null || b.lbmReliabilityPct === undefined ? null : bounded(b.lbmReliabilityPct,0,100);
   const lbmMethod = ['none','dexa','inbody','other'].includes(b.lbmMethod) ? b.lbmMethod : 'none';
   const lbm = rawLbm !== null && reliability !== null && reliability >= 70 && lbmMethod !== 'none' ? rawLbm : null;
   if (!sex || age === null || height === null || weight === null || target === null ||
-      !band || pal === null || !palValid || !goal || adjustment === null ||
+      !band || pal === null || !palValid || !goal || adjustment === null || !healthFlagsValid ||
       (b.lbmKg !== null && b.lbmKg !== undefined && Number(b.lbmKg) !== 0 && rawLbm === null) ||
       (rawLbm !== null && rawLbm > weight)) {
     res.status(400).json({ error:'بيانات الملف ناقصة أو خارج الحدود.' }); return;
@@ -186,7 +189,7 @@ app.put('/api/profile', authRequired, requireRole('customer'), asyncRoute(async 
     await client.query('UPDATE app_users SET allergens=$1 WHERE id=$2',[allergens,auth.id]);
     await client.query(
       'INSERT INTO customer_profiles (user_id,sex,age,height_cm,weight_kg,target_weight_kg,activity_band,pal,goal,goal_adjustment_pct,health_flags,lbm_kg,lbm_reliability_pct,lbm_method) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (user_id) DO UPDATE SET sex=EXCLUDED.sex,age=EXCLUDED.age,height_cm=EXCLUDED.height_cm,weight_kg=EXCLUDED.weight_kg,target_weight_kg=EXCLUDED.target_weight_kg,activity_band=EXCLUDED.activity_band,pal=EXCLUDED.pal,goal=EXCLUDED.goal,goal_adjustment_pct=EXCLUDED.goal_adjustment_pct,health_flags=EXCLUDED.health_flags,lbm_kg=EXCLUDED.lbm_kg,lbm_reliability_pct=EXCLUDED.lbm_reliability_pct,lbm_method=EXCLUDED.lbm_method,profile_version=customer_profiles.profile_version+1,updated_at=now()',
-      [auth.id,sex,age,height,weight,target,band,pal,goal,adjustment,JSON.stringify(b.healthFlags ?? {}),lbm,reliability,lbmMethod]
+      [auth.id,sex,age,height,weight,target,band,pal,goal,adjustment,JSON.stringify(healthFlags),lbm,reliability,lbmMethod]
     );
     await audit(client,auth.id,'profile.updated','customer_profile',auth.id);
     await client.query('COMMIT');
@@ -220,8 +223,21 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
       await client.query('ROLLBACK');
       res.status(409).json({ error:'منطقة الخدمة غير متاحة أو لم تعد معتمدة.' }); return;
     }
-    const customer = await client.query('SELECT allergens FROM app_users WHERE id=$1 FOR SHARE',[auth.id]);
-    const blocked = new Set<string>(customer.rows[0]?.allergens ?? []);
+    const customer = await client.query(
+      'SELECT u.allergens,p.age,p.health_flags,p.weight_kg,p.height_cm,p.goal FROM app_users u LEFT JOIN customer_profiles p ON p.user_id=u.id WHERE u.id=$1 FOR SHARE OF u,p',
+      [auth.id]
+    );
+    const customerProfile = customer.rows[0];
+    if (!customerProfile || !customerProfile.age || !customerProfile.weight_kg || !customerProfile.height_cm) {
+      throw new Error('PROFILE_REQUIRED');
+    }
+    const health = customerProfile.health_flags ?? {};
+    if (Number(customerProfile.age) < 18 || health.preg === true || health.kid === true || health.dia === true || health.ed === true) {
+      throw new Error('HEALTH_REVIEW_REQUIRED');
+    }
+    const bmi = Number(customerProfile.weight_kg) / Math.pow(Number(customerProfile.height_cm) / 100,2);
+    if (customerProfile.goal === 'cut' && bmi < 18.5) throw new Error('CUT_GOAL_BLOCKED');
+    const blocked = new Set<string>(customerProfile.allergens ?? []);
     const normalized: Array<{slot:number;slotName:string;label:string;grams:number;kcal:number;protein:number;carbs:number;fat:number;ingredients:Ingredient[]}> = [];
     const slots = new Set<number>();
 
@@ -317,6 +333,9 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
     await client.query('ROLLBACK');
     const messages: Record<string,string> = {
       INVALID_ITEM:'أحد عناصر الطلب غير صالح.',INVALID_GRAMS:'وزن أحد المكونات خارج النطاق.',
+      PROFILE_REQUIRED:'أكمل ملفك الغذائي قبل إرسال الطلب.',
+      HEALTH_REVIEW_REQUIRED:'يتطلب ملفك مراجعة مختص قبل قبول الطلب؛ لا يمكن تجاوزه آلياً.',
+      CUT_GOAL_BLOCKED:'لا يمكن قبول هدف خفض الوزن عند مؤشر كتلة جسم أقل من 18.5.',
       FOOD_UNAVAILABLE:'أحد المكونات غير متاح.',FOOD_NOT_VERIFIED:'لا يمكن طلب مكوّن غير موثق غذائياً.',
       ALLERGEN_BLOCK:'يتضمن الطلب مسبب حساسية مسجلاً في ملفك.',
       INVALID_MULTIPLIER:'حجم أحد الأطباق غير صالح.',DISH_UNAVAILABLE:'أحد الأطباق غير متاح.',
