@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { GOALS, PICKUP_POINTS, QUALITY_CHARTER } from '../data/seed';
-import { AppState, AppTab } from '../types';
+import { AppState } from '../types';
 import { calcNutrition, round1 } from '../utils/nutrition';
 import { EquationTable } from './EquationTable';
 import { Calculator, Download, MapPin, ShieldCheck, Trash2 } from 'lucide-react';
 
 interface AccountViewProps {
   state: AppState;
-  onUpdate: (updater: (prev: AppState) => AppState) => void;
   onReopenCalc: () => void;
-  onNavigate: (tab: AppTab) => void;
   onResetAll: () => void;
   onToast: (msg: string) => void;
 }
