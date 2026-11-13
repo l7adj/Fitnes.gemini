@@ -44,6 +44,7 @@ test('Katch-McArdle is used only when measured lean mass is supplied with suffic
   const state = createInitialState();
   state.lbm = 60;
   state.rel = 70;
+  state.lbmMethod = 'inbody';
 
   const result = calcNutrition(state);
 
@@ -65,6 +66,7 @@ test('unreliable lean-mass measurements fall back to Mifflin with an explicit wa
   const state = createInitialState();
   state.lbm = 60;
   state.rel = 69;
+  state.lbmMethod = 'inbody';
 
   const result = calcNutrition(state);
 
