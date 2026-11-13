@@ -223,12 +223,13 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
       await client.query('ROLLBACK');
       res.status(409).json({ error:'منطقة الخدمة غير متاحة أو لم تعد معتمدة.' }); return;
     }
-    const customer = await client.query(
-      'SELECT u.allergens,p.age,p.health_flags,p.weight_kg,p.height_cm,p.goal FROM app_users u LEFT JOIN customer_profiles p ON p.user_id=u.id WHERE u.id=$1 FOR SHARE OF u,p',
+    const customer = await client.query('SELECT allergens FROM app_users WHERE id=$1 FOR SHARE',[auth.id]);
+    const profileResult = await client.query(
+      'SELECT age,health_flags,weight_kg,height_cm,goal FROM customer_profiles WHERE user_id=$1 FOR SHARE',
       [auth.id]
     );
-    const customerProfile = customer.rows[0];
-    if (!customerProfile || !customerProfile.age || !customerProfile.weight_kg || !customerProfile.height_cm) {
+    const customerProfile = profileResult.rows[0];
+    if (!customer.rowCount || !customerProfile || !customerProfile.age || !customerProfile.weight_kg || !customerProfile.height_cm) {
       throw new Error('PROFILE_REQUIRED');
     }
     const health = customerProfile.health_flags ?? {};
@@ -237,7 +238,7 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
     }
     const bmi = Number(customerProfile.weight_kg) / Math.pow(Number(customerProfile.height_cm) / 100,2);
     if (customerProfile.goal === 'cut' && bmi < 18.5) throw new Error('CUT_GOAL_BLOCKED');
-    const blocked = new Set<string>(customerProfile.allergens ?? []);
+    const blocked = new Set<string>(customer.rows[0]?.allergens ?? []);
     const normalized: Array<{slot:number;slotName:string;label:string;grams:number;kcal:number;protein:number;carbs:number;fat:number;ingredients:Ingredient[]}> = [];
     const slots = new Set<number>();
 
