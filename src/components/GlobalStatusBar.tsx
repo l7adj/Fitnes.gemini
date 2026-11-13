@@ -12,8 +12,8 @@ export const GlobalStatusBar: React.FC<GlobalStatusBarProps> = ({ state }) => {
 
   if (r.err) {
     return (
-      <div className="sticky top-0 z-30 bg-[#0b0d0b]/95 backdrop-blur-md border-b border-[#262b24] px-3 py-2.5">
-        <div className="max-w-5xl mx-auto text-xs text-[#c45d51] font-semibold truncate">
+      <div className="sticky top-0 z-30 bg-[#09090b]/95 backdrop-blur-md border-b border-[#232329] px-3 py-2">
+        <div className="max-w-6xl mx-auto text-xs text-[#b86157] font-semibold truncate">
           {r.err}
         </div>
       </div>
@@ -22,73 +22,67 @@ export const GlobalStatusBar: React.FC<GlobalStatusBarProps> = ({ state }) => {
 
   const cells = [
     {
-      label: 'سعرات',
+      label: 'السعرات المتبقية',
+      shortLabel: 'سعرات',
       remaining: Math.max(0, r.kcal - t.kcal),
       target: r.kcal,
       planned: t.kcal,
-      color: '#e5cf94',
-      barColor: '#c9a85c',
-      unit: '',
+      accent: '#e6d1a3',
+      unit: 'kcal',
     },
     {
-      label: 'بروتين',
+      label: 'بروتين متبقٍ',
+      shortLabel: 'بروتين',
       remaining: Math.max(0, r.fp - t.p),
       target: r.fp,
       planned: t.p,
-      color: '#d4a24c',
-      barColor: '#d4a24c',
+      accent: '#c8a96e',
       unit: 'غ',
     },
     {
-      label: 'كارب',
+      label: 'كارب متبقٍ',
+      shortLabel: 'كارب',
       remaining: Math.max(0, r.C - t.c),
       target: r.C,
       planned: t.c,
-      color: '#5aa882',
-      barColor: '#5aa882',
+      accent: '#6b9c7e',
       unit: 'غ',
     },
     {
-      label: 'دهون',
+      label: 'دهون متبقية',
+      shortLabel: 'دهون',
       remaining: Math.max(0, r.F - t.f),
       target: r.F,
       planned: t.f,
-      color: '#c97a57',
-      barColor: '#c97a57',
+      accent: '#a98c72',
       unit: 'غ',
     },
   ];
 
   return (
-    <div className="sticky top-0 z-30 bg-[#0b0d0b]/95 backdrop-blur-md border-b border-[#262b24] px-3 py-2">
-      <div className="max-w-5xl mx-auto grid grid-cols-4 gap-1.5 sm:gap-3">
+    <div className="sticky top-0 z-30 bg-[#09090b]/92 backdrop-blur-md border-b border-[#232329] px-3 py-1.5">
+      <div className="max-w-6xl mx-auto grid grid-cols-4 divide-x divide-x-reverse divide-[#232329]">
         {cells.map((c) => {
           const pct = c.target > 0 ? clamp((c.planned / c.target) * 100, 0, 100) : 0;
           return (
-            <div
-              key={c.label}
-              className="bg-[#131613] border border-[#262b24] rounded-xl px-2 py-1.5 text-center"
-            >
-              <div
-                className="text-sm sm:text-base font-bold leading-tight tabular-nums"
-                style={{ color: c.color }}
-              >
-                {round0(c.remaining)}
-                {c.unit && (
-                  <span className="text-[10px] mr-0.5 font-normal text-[#9b988d]">
-                    {c.unit}
-                  </span>
-                )}
+            <div key={c.label} className="px-2 sm:px-4 py-1 text-center">
+              <div className="flex items-baseline justify-center gap-1 tabular-nums">
+                <span className="text-sm sm:text-base font-bold text-[#f3f1ec]">
+                  {round0(c.remaining)}
+                </span>
+                <span className="text-[10px] font-medium" style={{ color: c.accent }}>
+                  {c.unit}
+                </span>
               </div>
-              <div className="text-[10px] text-[#9b988d] font-medium truncate">
-                {c.label} متبقٍ
+              <div className="text-[10px] text-[#96938a] truncate">
+                {c.shortLabel}
               </div>
-              <div className="h-[2px] bg-[#262b24] rounded-full mt-1 overflow-hidden">
+              <div className="h-[2px] bg-[#1d1d22] mt-1 overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full transition-all duration-300"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: c.barColor,
+                    backgroundColor: c.accent,
                   }}
                 />
               </div>

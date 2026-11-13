@@ -117,8 +117,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-extrabold text-[#f4f1e6]">الجورنال وتطور الجسم</h1>
-        <div className="flex items-center gap-2 text-xs text-[#a8a493]">
+        <h1 className="text-2xl font-bold text-[#f3f1ec]">الجورنال وتطور الجسم</h1>
+        <div className="flex items-center gap-2 text-xs text-[#96938a]">
           <span>الوزن المستهدف:</span>
           <input
             type="number"
@@ -130,7 +130,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                 onUpdate((prev) => ({ ...prev, targetWeight: v }));
               }
             }}
-            className="w-16 bg-[#141910] border border-[#2b3322] rounded-lg px-2 py-1 text-center font-num font-bold text-[#d8b25c]"
+            className="w-16 bg-[#111114] border border-[#232329] rounded-lg px-2 py-1 text-center font-num font-bold text-[#c8a96e] tabular-nums focus:border-[#c8a96e] outline-none"
           />
           <span>كغ</span>
         </div>
@@ -140,8 +140,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
         {/* Left: Weight Logger + SVG Chart + History */}
         <div className="lg:col-span-7 space-y-4">
           {/* Log Today's Weight */}
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
-            <label className="block text-xs font-bold text-[#a8a493] mb-2">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5">
+            <label className="block text-xs font-bold text-[#96938a] mb-2">
               تسجيل وزن اليوم ({formatArabicDate(today)})
             </label>
             <div className="flex gap-2">
@@ -151,13 +151,13 @@ export const JournalView: React.FC<JournalViewProps> = ({
                 inputMode="decimal"
                 value={weightInput}
                 onChange={(e) => setWeightInput(e.target.value)}
-                className="flex-1 bg-[#1c2216] border border-[#2b3322] rounded-xl px-3.5 py-2.5 font-num text-base font-bold text-[#f4f1e6]"
+                className="flex-1 bg-[#18181c] border border-[#232329] rounded-xl px-3.5 py-2.5 font-num text-base font-bold text-[#f3f1ec] tabular-nums focus:border-[#c8a96e] outline-none"
                 placeholder={String(state.w)}
               />
               <button
                 type="button"
                 onClick={handleSaveWeight}
-                className="px-6 py-2.5 rounded-xl font-extrabold text-sm text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] cursor-pointer"
+                className="touch-press px-6 py-2.5 rounded-xl font-bold text-sm text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] cursor-pointer"
               >
                 حفظ
               </button>
@@ -165,19 +165,19 @@ export const JournalView: React.FC<JournalViewProps> = ({
           </div>
 
           {/* Current Stats + SVG Weight Chart */}
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4 space-y-4">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs text-[#a8a493]">الوزن الحالي</div>
-                <div className="font-num text-3xl sm:text-4xl font-extrabold text-[#f4f1e6] tabular-nums mt-0.5">
-                  {currentWeight} <span className="text-sm font-normal text-[#a8a493]">كغ</span>
+                <div className="text-xs text-[#96938a]">الوزن الحالي</div>
+                <div className="font-num text-3xl sm:text-4xl font-bold text-[#f3f1ec] tabular-nums mt-0.5">
+                  {currentWeight} <span className="text-sm font-normal text-[#96938a]">كغ</span>
                 </div>
               </div>
               <div className="text-left">
-                <div className="text-xs text-[#a8a493]">الفرق منذ البداية</div>
+                <div className="text-xs text-[#96938a]">الفرق منذ البداية</div>
                 <div
-                  className={`font-num text-base font-extrabold flex items-center justify-end gap-1 mt-0.5 tabular-nums ${
-                    deltaStart <= 0 ? 'text-[#5bc88a]' : 'text-[#e8b04b]'
+                  className={`font-num text-base font-bold flex items-center justify-end gap-1 mt-0.5 tabular-nums ${
+                    deltaStart <= 0 ? 'text-[#6b9c7e]' : 'text-[#c89a56]'
                   }`}
                 >
                   {deltaStart <= 0 ? (
@@ -192,7 +192,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
 
             {/* Range Switcher */}
             <div className="flex items-center justify-between gap-2">
-              <div className="flex gap-1 p-1 bg-[#1c2216] border border-[#2b3322] rounded-xl">
+              <div className="flex gap-1 p-1 bg-[#18181c] border border-[#232329] rounded-xl">
                 {(
                   [
                     ['1m', 'شهر'],
@@ -204,10 +204,10 @@ export const JournalView: React.FC<JournalViewProps> = ({
                     key={key}
                     type="button"
                     onClick={() => onUpdate((prev) => ({ ...prev, chartRange: key }))}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${
+                    className={`touch-press px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${
                       state.chartRange === key
-                        ? 'bg-[#2a2410] text-[#f2d491]'
-                        : 'text-[#a8a493]'
+                        ? 'bg-[#1c1a15] text-[#e6d1a3]'
+                        : 'text-[#96938a] hover:text-[#f3f1ec]'
                     }`}
                   >
                     {label}
@@ -215,7 +215,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                 ))}
               </div>
               {hoverIdx !== null && chartEntries[hoverIdx] && (
-                <div className="font-num text-xs text-[#f2d491] font-bold">
+                <div className="font-num text-xs text-[#e6d1a3] font-bold tabular-nums">
                   {formatArabicDate(chartEntries[hoverIdx].d)}: {chartEntries[hoverIdx].w} كغ
                 </div>
               )}
@@ -227,8 +227,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
                 <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto block">
                   <defs>
                     <linearGradient id="nfWeightGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#d8b25c" stopOpacity="0.32" />
-                      <stop offset="100%" stopColor="#d8b25c" stopOpacity="0" />
+                      <stop offset="0%" stopColor="#c8a96e" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="#c8a96e" stopOpacity="0" />
                     </linearGradient>
                   </defs>
 
@@ -238,7 +238,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                     y1={targetY}
                     x2={chartW - padX}
                     y2={targetY}
-                    stroke="#6ca87d"
+                    stroke="#6b9c7e"
                     strokeWidth="1.5"
                     strokeDasharray="5 5"
                   />
@@ -246,7 +246,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                     x={chartW - padX}
                     y={targetY - 6}
                     textAnchor="end"
-                    fill="#6ca87d"
+                    fill="#6b9c7e"
                     fontSize="11"
                   >
                     هدف {state.targetWeight} كغ
@@ -264,7 +264,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                       />
                       <polyline
                         fill="none"
-                        stroke="#c9a85c"
+                        stroke="#c8a96e"
                         strokeWidth="2.2"
                         strokeLinejoin="round"
                         strokeLinecap="round"
@@ -290,8 +290,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
                           cx={cx}
                           cy={cy}
                           r={active ? 5 : 3.2}
-                          fill={active ? '#e5cf94' : '#c9a85c'}
-                          stroke="#0c0e0c"
+                          fill={active ? '#e6d1a3' : '#c8a96e'}
+                          stroke="#09090b"
                           strokeWidth="1.5"
                         />
                       </g>
@@ -300,7 +300,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                 </svg>
               </div>
             ) : (
-              <div className="text-xs text-[#716e5e] py-6 text-center">
+              <div className="text-xs text-[#66645e] py-6 text-center">
                 سجّل قياسين على الأقل لعرض المنحنى البياني.
               </div>
             )}
@@ -308,17 +308,17 @@ export const JournalView: React.FC<JournalViewProps> = ({
 
           {/* Recent Measurements Table */}
           {sortedAll.length > 0 && (
-            <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
-              <h2 className="text-sm font-bold text-[#f4f1e6] mb-2">سجل القياسات</h2>
-              <div className="divide-y divide-[#2b3322] max-h-60 overflow-y-auto">
+            <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5">
+              <h2 className="text-sm font-bold text-[#f3f1ec] mb-2">سجل القياسات</h2>
+              <div className="divide-y divide-[#232329] max-h-60 overflow-y-auto">
                 {[...sortedAll].reverse().map((e) => (
                   <div
                     key={e.d}
                     className="py-2 flex items-center justify-between text-xs"
                   >
-                    <span className="text-[#a8a493]">{formatArabicDate(e.d)}</span>
+                    <span className="text-[#96938a]">{formatArabicDate(e.d)}</span>
                     <div className="flex items-center gap-3">
-                      <span className="font-num font-bold text-[#f4f1e6] tabular-nums">
+                      <span className="font-num font-bold text-[#f3f1ec] tabular-nums">
                         {e.w} كغ
                       </span>
                       <button
@@ -329,7 +329,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                             jr: prev.jr.filter((x) => x.d !== e.d),
                           }))
                         }
-                        className="text-[#716e5e] hover:text-[#e86a5a] cursor-pointer"
+                        className="touch-press text-[#66645e] hover:text-[#b86157] cursor-pointer"
                         aria-label="حذف القياس"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -345,20 +345,20 @@ export const JournalView: React.FC<JournalViewProps> = ({
         {/* Right: Smart Weekly Calibration + Progress Photos */}
         <div className="lg:col-span-5 space-y-4">
           {/* Weekly Adherence + Smart Linear Regression Calibration */}
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4 space-y-3">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[#d8b25c]">
+              <h2 className="text-sm font-bold text-[#c8a96e]">
                 المعايرة الأسبوعية الذكية (انحدار 28 يومًا)
               </h2>
-              <span className="font-num text-[10px] border border-[#d8b25c]/50 text-[#d8b25c] rounded px-1.5 py-0.5">
+              <span className="font-num text-[10px] border border-[#c8a96e]/50 text-[#c8a96e] rounded px-1.5 py-0.5 tabular-nums">
                 C
               </span>
             </div>
 
             <div>
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-[#a8a493]">نسبة الالتزام الأسبوعي بالخطة</span>
-                <span className="font-num font-extrabold text-[#f2d491] tabular-nums">
+                <span className="text-[#96938a]">نسبة الالتزام الأسبوعي بالخطة</span>
+                <span className="font-num font-bold text-[#e6d1a3] tabular-nums">
                   {state.adh}%
                 </span>
               </div>
@@ -371,24 +371,24 @@ export const JournalView: React.FC<JournalViewProps> = ({
                 onChange={(e) =>
                   onUpdate((prev) => ({ ...prev, adh: Number(e.target.value) }))
                 }
-                className="w-full accent-[#d8b25c] cursor-pointer"
+                className="w-full accent-[#c8a96e] cursor-pointer"
               />
-              <div className="text-[11px] text-[#716e5e] mt-1">
+              <div className="text-[11px] text-[#66645e] mt-1">
                 لا يُقترح أي تغيير في السعرات إذا كان الالتزام أقل من 80%.
               </div>
             </div>
 
             {calibration.rateKgPerWeek !== null && (
-              <div className="bg-[#1c2216] border border-[#2b3322] rounded-xl p-3 flex justify-between text-xs font-num tabular-nums">
-                <span className="text-[#a8a493]">المعدل المحسوب (28 يومًا):</span>
-                <span className="font-bold text-[#f4f1e6]">
+              <div className="bg-[#18181c] border border-[#232329] rounded-xl p-3 flex justify-between text-xs font-num tabular-nums">
+                <span className="text-[#96938a]">المعدل المحسوب (28 يومًا):</span>
+                <span className="font-bold text-[#f3f1ec]">
                   {calibration.rateKgPerWeek > 0 ? '+' : ''}
                   {calibration.rateKgPerWeek} كغ / أسبوع
                 </span>
               </div>
             )}
 
-            <p className="text-xs text-[#f4f1e6] leading-relaxed bg-[#1c2216] border border-[#2b3322] rounded-xl p-3">
+            <p className="text-xs text-[#f3f1ec] leading-relaxed bg-[#18181c] border border-[#232329] rounded-xl p-3">
               {calibration.reason}
             </p>
 
@@ -411,7 +411,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                     }));
                     onToast(`تم اعتماد تعديل ${calibration.deltaPct > 0 ? '+' : ''}${calibration.deltaPct}%`);
                   }}
-                  className="py-2.5 rounded-xl font-extrabold text-xs text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] cursor-pointer"
+                  className="touch-press py-2.5 rounded-xl font-bold text-xs text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] cursor-pointer"
                 >
                   اعتماد ({calibration.deltaPct > 0 ? '+5%' : '−5%'})
                 </button>
@@ -420,7 +420,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                   onClick={() =>
                     onUpdate((prev) => ({ ...prev, calDismissedDate: today }))
                   }
-                  className="py-2.5 rounded-xl font-bold text-xs text-[#a8a493] bg-[#1c2216] border border-[#2b3322] cursor-pointer"
+                  className="touch-press py-2.5 rounded-xl font-bold text-xs text-[#96938a] bg-[#18181c] border border-[#232329] cursor-pointer"
                 >
                   تجاهل اليوم
                 </button>
@@ -429,15 +429,15 @@ export const JournalView: React.FC<JournalViewProps> = ({
           </div>
 
           {/* Progress Photos (900px, JPEG 0.72) */}
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4 space-y-3">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h2 className="text-sm font-bold text-[#f4f1e6]">صور التقدم</h2>
-                <div className="text-[11px] text-[#a8a493]">
+                <h2 className="text-sm font-bold text-[#f3f1ec]">صور التقدم</h2>
+                <div className="text-[11px] text-[#96938a]">
                   ضغط تلقائي محلي (900px · JPEG 0.72)
                 </div>
               </div>
-              <label className="px-3.5 py-2 rounded-xl bg-[#1c2216] border border-[#d8b25c]/50 text-xs font-bold text-[#f2d491] flex items-center gap-1.5 cursor-pointer hover:bg-[#2a2410]">
+              <label className="touch-press px-3.5 py-2 rounded-xl bg-[#18181c] border border-[#c8a96e]/50 text-xs font-bold text-[#e6d1a3] flex items-center gap-1.5 cursor-pointer hover:bg-[#1c1a15]">
                 <Camera className="w-3.5 h-3.5" />
                 <span>{uploading ? 'جاري الضغط...' : 'رفع صورة'}</span>
                 <input
@@ -450,7 +450,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
             </div>
 
             {state.photos.length === 0 ? (
-              <div className="text-xs text-[#716e5e] bg-[#1c2216] border border-[#2b3322] rounded-xl p-4 text-center">
+              <div className="text-xs text-[#66645e] bg-[#18181c] border border-[#232329] rounded-xl p-4 text-center">
                 لم تُرفع صور تقدم بعد. ارفع صورتين على الأقل للمقارنة قبل/بعد مع فرق الوزن.
               </div>
             ) : (
@@ -461,8 +461,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
                     return (
                       <div
                         key={ph.id}
-                        className={`relative rounded-xl overflow-hidden border bg-[#1c2216] ${
-                          selIdx >= 0 ? 'border-[#d8b25c]' : 'border-[#2b3322]'
+                        className={`relative rounded-xl overflow-hidden border bg-[#18181c] ${
+                          selIdx >= 0 ? 'border-[#c8a96e]' : 'border-[#232329]'
                         }`}
                       >
                         <button
@@ -483,15 +483,16 @@ export const JournalView: React.FC<JournalViewProps> = ({
                           <img
                             src={ph.dataUrl}
                             alt={`صورة تقدم ${ph.date}`}
+                            referrerPolicy="no-referrer"
                             className="w-full aspect-[3/4] object-cover"
                           />
-                          <div className="p-1.5 text-[10px] font-num text-[#f4f1e6] flex justify-between">
+                          <div className="p-1.5 text-[10px] font-num text-[#f3f1ec] flex justify-between tabular-nums">
                             <span>{ph.date.slice(5)}</span>
-                            <span className="text-[#d8b25c] font-bold">{ph.weight}كغ</span>
+                            <span className="text-[#c8a96e] font-bold">{ph.weight}كغ</span>
                           </div>
                         </button>
                         {selIdx >= 0 && (
-                          <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-md bg-[#d8b25c] text-[#171204] flex items-center justify-center text-[10px] font-bold">
+                          <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-md bg-[#c8a96e] text-[#141108] flex items-center justify-center text-[10px] font-bold">
                             <Check className="w-3 h-3" />
                           </span>
                         )}
@@ -507,7 +508,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                               compareIds[1] === ph.id ? null : compareIds[1],
                             ]);
                           }}
-                          className="absolute top-1.5 left-1.5 p-1 rounded-md bg-black/70 text-[#e86a5a] cursor-pointer"
+                          className="touch-press absolute top-1.5 left-1.5 p-1 rounded-md bg-black/75 text-[#b86157] cursor-pointer"
                           aria-label="حذف الصورة"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -519,10 +520,10 @@ export const JournalView: React.FC<JournalViewProps> = ({
 
                 {/* Before / After Comparison */}
                 {photoA && photoB && (
-                  <div className="bg-[#1c2216] border border-[#d8b25c]/50 rounded-xl p-3 space-y-2">
+                  <div className="bg-[#18181c] border border-[#c8a96e]/50 rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#d8b25c]">مقارنة قبل / بعد</span>
-                      <span className="font-num text-[#f2d491]">
+                      <span className="text-[#c8a96e]">مقارنة قبل / بعد</span>
+                      <span className="font-num text-[#e6d1a3] tabular-nums">
                         الفرق: {round1(photoB.weight - photoA.weight) > 0 ? '+' : ''}
                         {round1(photoB.weight - photoA.weight)} كغ
                       </span>
@@ -533,10 +534,11 @@ export const JournalView: React.FC<JournalViewProps> = ({
                           <img
                             src={p.dataUrl}
                             alt={idx === 0 ? 'قبل' : 'بعد'}
+                            referrerPolicy="no-referrer"
                             className="w-full aspect-[3/4] object-cover rounded-lg"
                           />
-                          <div className="text-[11px] text-center font-num text-[#a8a493]">
-                            {p.date} · <b className="text-[#f4f1e6]">{p.weight} كغ</b>
+                          <div className="text-[11px] text-center font-num text-[#96938a] tabular-nums">
+                            {p.date} · <b className="text-[#f3f1ec]">{p.weight} كغ</b>
                           </div>
                         </div>
                       ))}

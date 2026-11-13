@@ -8,7 +8,7 @@ import {
   round0,
 } from '../utils/nutrition';
 
-const SLOT_TONES = ['#c9a85c', '#5aa882', '#d4a24c', '#c97a57', '#8f8b7e'];
+const SLOT_TONES = ['#c8a96e', '#6b9c7e', '#e6d1a3', '#a98c72', '#96938a'];
 
 interface MealSlotsSummaryProps {
   state: AppState;
@@ -51,14 +51,14 @@ export const MealSlotsSummary: React.FC<MealSlotsSummaryProps> = ({ state, onSel
   return (
     <div className="space-y-3">
       {totalKcal > 0 && (
-        <div className="h-2 w-full rounded-full overflow-hidden bg-[#262b24] flex">
+        <div className="h-1.5 w-full rounded-full overflow-hidden bg-[#18181c] flex">
           {slots.map((s, idx) => {
             const pct = (s.kcal / totalKcal) * 100;
             if (pct <= 0) return null;
             return (
               <div
                 key={idx}
-                className="h-full transition-all duration-500"
+                className="h-full transition-all duration-300"
                 style={{
                   width: `${pct}%`,
                   backgroundColor: SLOT_TONES[idx % SLOT_TONES.length],
@@ -69,7 +69,7 @@ export const MealSlotsSummary: React.FC<MealSlotsSummaryProps> = ({ state, onSel
         </div>
       )}
 
-      <div className="divide-y divide-[#262b24] bg-[#191d19] border border-[#262b24] rounded-xl px-3">
+      <div className="divide-y divide-[#232329] bg-[#18181c] border border-[#232329] rounded-xl px-3">
         {slots.map((s, idx) => {
           const pct = totalKcal > 0 ? round0((s.kcal / totalKcal) * 100) : 0;
           const tone = SLOT_TONES[idx % SLOT_TONES.length];
@@ -83,37 +83,38 @@ export const MealSlotsSummary: React.FC<MealSlotsSummaryProps> = ({ state, onSel
                     onClick: () => onSelectSlot(idx),
                   }
                 : {})}
-              className={`w-full text-right py-2.5 block ${
-                onSelectSlot ? 'hover:bg-[#1f241f] -mx-1.5 px-1.5 rounded-lg transition cursor-pointer' : ''
+              className={`w-full text-right py-3 block ${
+                onSelectSlot ? 'touch-press hover:bg-[#1e1e24] -mx-1.5 px-1.5 rounded-lg cursor-pointer' : ''
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: tone }}
-                    aria-hidden="true"
-                  />
+                    className="text-[11px] font-bold tabular-nums shrink-0"
+                    style={{ color: tone }}
+                  >
+                    0{idx + 1}.
+                  </span>
                   <span className="text-xs font-bold text-[#f3f1ec] truncate">
                     {getMealSlotName(state, idx)}
                   </span>
                   {totalKcal > 0 && (
-                    <span className="text-[11px] text-[#9b988d] tabular-nums shrink-0">
+                    <span className="text-[11px] text-[#96938a] tabular-nums shrink-0">
                       {pct}%
                     </span>
                   )}
                 </div>
                 <div className="text-xs font-bold tabular-nums shrink-0">
-                  <span className="text-[#e5cf94]">{round0(s.kcal)} kcal</span>
-                  <span className="text-[#68665d] mx-1">·</span>
-                  <span className="text-[#d4a24c]">P{round0(s.p)}</span>
-                  <span className="text-[#68665d] mx-1">·</span>
-                  <span className="text-[#5aa882]">C{round0(s.c)}</span>
-                  <span className="text-[#68665d] mx-1">·</span>
-                  <span className="text-[#c97a57]">F{round0(s.f)}</span>
+                  <span className="text-[#e6d1a3]">{round0(s.kcal)} kcal</span>
+                  <span className="text-[#66645e] mx-1">·</span>
+                  <span className="text-[#c8a96e]">P{round0(s.p)}</span>
+                  <span className="text-[#66645e] mx-1">·</span>
+                  <span className="text-[#6b9c7e]">C{round0(s.c)}</span>
+                  <span className="text-[#66645e] mx-1">·</span>
+                  <span className="text-[#a98c72]">F{round0(s.f)}</span>
                 </div>
               </div>
-              <div className="text-[11px] text-[#9b988d] mt-1 leading-relaxed">
+              <div className="text-[11px] text-[#96938a] mt-1 leading-relaxed">
                 {s.labels.length > 0
                   ? s.labels.join(' · ')
                   : onSelectSlot

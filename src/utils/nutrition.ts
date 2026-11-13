@@ -183,6 +183,51 @@ export function calcNutrition(state: AppState): CalcResult {
     };
   }
 
+  const palRange = ACTIVITY_BANDS[state.band];
+  if (state.pal < palRange.min || state.pal > palRange.max) {
+    return {
+      err: `معامل النشاط ${state.pal.toFixed(2)} خارج نطاق ${palRange.min.toFixed(2)}–${palRange.max.toFixed(2)} للنشاط المحدد.`,
+      kat: false,
+      bmi,
+      bmr: 0,
+      tdee: 0,
+      kcal: 0,
+      P: 0,
+      F: 0,
+      C: 0,
+      fiber: 25,
+      pg: 0,
+      cg: 0,
+      sc: 0,
+      sp: 0,
+      ev: '',
+      fp: 0,
+      warn: [],
+    };
+  }
+
+  if (state.lbm > state.w || state.rel < 0 || state.rel > 100) {
+    return {
+      err: 'تحقق من قياس الكتلة الخالية من الدهون وموثوقيته؛ يجب ألا تتجاوز LBM وزن الجسم، والموثوقية بين 0 و100%.',
+      kat: false,
+      bmi,
+      bmr: 0,
+      tdee: 0,
+      kcal: 0,
+      P: 0,
+      F: 0,
+      C: 0,
+      fiber: 25,
+      pg: 0,
+      cg: 0,
+      sc: 0,
+      sp: 0,
+      ev: '',
+      fp: 0,
+      warn: [],
+    };
+  }
+
   if (state.pct < -25 || state.pct > 25) {
     return {
       err: 'نطاق الفائض أو العجز المسموح به هو بين −25% و+25% فقط.',
@@ -205,7 +250,11 @@ export function calcNutrition(state: AppState): CalcResult {
     };
   }
 
-  const kat = state.lbm > 0 && state.rel >= 70;
+  const kat =
+    state.lbm > 0 &&
+    state.rel >= 70 &&
+    state.lbmMethod !== undefined &&
+    state.lbmMethod !== 'none';
   const bmr = kat
     ? 370 + 21.6 * state.lbm
     : 10 * state.w + 6.25 * state.h - 5 * state.age + (state.sex === 'm' ? 5 : -161);
@@ -214,7 +263,7 @@ export function calcNutrition(state: AppState): CalcResult {
 
   if (kcal < bmr) {
     return {
-      err: `السعرات المستهدفة (${round0(kcal)} kcal) أقل من معدل الأيض الأساسي (${round0(bmr)} kcal). خفّف نسبة العجز.`,
+      err: `السعرات المستهدفة (${round0(kcal)} kcal) أقل من معدل الأيض في الراحة (${round0(bmr)} kcal). خفّف نسبة العجز.`,
       kat,
       bmi,
       bmr,
@@ -235,6 +284,9 @@ export function calcNutrition(state: AppState): CalcResult {
   }
 
   const warn: string[] = [];
+  if (state.lbm > 0 && (!state.lbmMethod || state.lbmMethod === 'none' || state.rel < 70)) {
+    warn.push('لم تُستخدم قيمة LBM لعدم توثيق طريقة القياس أو لأن موثوقية القياس أقل من 70%؛ استُخدمت معادلة Mifflin-St Jeor.');
+  }
   if (state.pct < -20) {
     warn.push('عجز أكبر من 20%: يُنصح به لفترات قصيرة ومراقبة دقيقة فقط.');
   }
@@ -270,10 +322,9 @@ export function calcNutrition(state: AppState): CalcResult {
     };
   }
 
-  const C = Math.max(60, rawC);
-  if (rawC < 60) {
-    warn.push('تم تطبيق الحد الأدنى للكاربوهيدرات (60 غ يوميًا) للحفاظ على الوظائف الأساسية.');
-  }
+  // Carbohydrate is the energy remainder. Never clamp it: doing so would
+  // silently increase the prescribed calories beyond the stated energy target.
+  const C = rawC;
   const cg = C / state.w;
   if (cg < 3) {
     warn.push('الكارب منخفض نسبيًا لرياضي؛ راقب جودة الأداء أثناء الحصص.');
@@ -282,17 +333,20 @@ export function calcNutrition(state: AppState): CalcResult {
   }
 
   const sc = state.sup ? Math.min(state.supg, 0.5 * P) : 0;
-  const sp = state.sup && P > 0 ? (state.supg / P) * 100 : 0;
+  // Classify the amount actually credited, while retaining whether the
+  // requested supplement amount exceeded the operational 50% ceiling.
+  const requestedSp = state.sup && P > 0 ? (state.supg / P) * 100 : 0;
+  const sp = P > 0 ? (sc / P) * 100 : 0;
   const ev =
-    sp <= 20
-      ? 'مكمل خفيف'
-      : sp <= 30
-        ? 'توازن مثالي'
-        : sp <= 40
-          ? 'مقبول'
-          : sp <= 50
-            ? 'مرتفع'
-            : 'مقصوص لسقف 50%';
+    requestedSp > 50
+      ? 'تم تحديده بسقف 50%'
+      : sp <= 20
+        ? 'مكمل خفيف'
+        : sp <= 30
+          ? 'توازن مثالي'
+          : sp <= 40
+            ? 'مقبول'
+            : 'مرتفع';
   const fp = Math.max(0, P - sc);
 
   return {

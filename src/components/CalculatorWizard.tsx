@@ -22,12 +22,12 @@ const Stepper: React.FC<{
   onChange: (val: number) => void;
 }> = ({ label, value, unit, step, min = 0, max = 500, onChange }) => (
   <div className="mt-3">
-    <label className="block text-xs font-semibold text-[#a8a493] mb-1.5">{label}</label>
-    <div className="flex items-center bg-[#1c2216] border border-[#2b3322] rounded-xl overflow-hidden">
+    <label className="block text-xs font-semibold text-[#96938a] mb-1.5">{label}</label>
+    <div className="flex items-center bg-[#18181c] border border-[#232329] rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => onChange(Math.max(min, round2(value - step)))}
-        className="w-14 h-12 flex items-center justify-center text-xl font-bold text-[#d8b25c] hover:bg-[#2a2410] active:scale-95 transition"
+        className="touch-press w-14 h-12 flex items-center justify-center text-xl font-bold text-[#c8a96e] hover:bg-[#1c1a15] cursor-pointer"
         aria-label={`إنقاص ${label}`}
       >
         −
@@ -41,14 +41,14 @@ const Stepper: React.FC<{
             const v = parseFloat(e.target.value);
             onChange(Number.isNaN(v) ? 0 : Math.min(max, v));
           }}
-          className="w-full bg-transparent border-0 text-center font-num text-xl font-bold text-[#f4f1e6] focus:outline-none"
+          className="w-full bg-transparent border-0 text-center font-num text-xl font-bold text-[#f3f1ec] focus:outline-none tabular-nums"
         />
-        <span className="block text-[10px] text-[#716e5e] -mt-1">{unit}</span>
+        <span className="block text-[10px] text-[#66645e] -mt-1">{unit}</span>
       </div>
       <button
         type="button"
         onClick={() => onChange(Math.min(max, round2(value + step)))}
-        className="w-14 h-12 flex items-center justify-center text-xl font-bold text-[#d8b25c] hover:bg-[#2a2410] active:scale-95 transition"
+        className="touch-press w-14 h-12 flex items-center justify-center text-xl font-bold text-[#c8a96e] hover:bg-[#1c1a15] cursor-pointer"
         aria-label={`زيادة ${label}`}
       >
         +
@@ -87,35 +87,40 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
     return (
       <div className="max-w-xl mx-auto px-4 py-8 sm:py-12">
         <div className="text-center space-y-3 mb-8">
-          <div className="text-xs font-semibold text-[#d8b25c] tracking-wide">
-            الشراقة وما جاورها · الجزائر العاصمة
+          <div className="text-xs font-semibold text-[#c8a96e] tracking-wide">
+            الجزائر · معاينة تفاعلية
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#f4f1e6] text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#f3f1ec] text-balance">
             NutriFit DZ
           </h1>
-          <p className="text-base sm:text-lg text-[#f2d491] font-semibold max-w-md mx-auto text-balance">
+          <p className="text-base sm:text-lg text-[#e6d1a3] font-semibold max-w-md mx-auto text-balance">
             يحسب احتياجك بالغرام، يطبخ وجباتك، ويوصلها لبابك صباحًا.
           </p>
         </div>
 
-        <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-5 space-y-4 mb-6">
-          <div className="text-sm font-bold text-[#f4f1e6]">الرحلة الكاملة في نظام واحد</div>
-          <div className="space-y-3 text-sm text-[#a8a493] leading-relaxed">
+        <div className="mb-5 rounded-xl border border-[#c8a96e]/25 bg-[#18181c] px-4 py-3 text-[11px] leading-6 text-[#96938a]">
+          <strong className="text-[#e6d1a3]">نسخة معاينة:</strong>{' '}
+          هذه الواجهة تختبر رحلة العميل والحسابات محلياً. لم تُربط بعد بخدمة طلبات أو مطبخ أو توصيل مباشر.
+        </div>
+
+        <div className="bg-[#111114] border border-[#232329] rounded-2xl p-5 space-y-4 mb-6">
+          <div className="text-sm font-bold text-[#f3f1ec]">الرحلة الكاملة في نظام واحد</div>
+          <div className="space-y-3 text-sm text-[#96938a] leading-relaxed">
             <div className="flex gap-3">
-              <span className="font-num font-bold text-[#d8b25c]">01</span>
+              <span className="font-num font-bold text-[#c8a96e] tabular-nums">01</span>
               <span>حاسبة علمية شفافة بالمعادلات المنشورة مع بوابة سلامة طبية.</span>
             </div>
             <div className="flex gap-3">
-              <span className="font-num font-bold text-[#d8b25c]">02</span>
+              <span className="font-num font-bold text-[#c8a96e] tabular-nums">02</span>
               <span>تختار وجباتك ومكوناتك بالغرام، وتوزعها على يومك كما تشاء.</span>
             </div>
             <div className="flex gap-3">
-              <span className="font-num font-bold text-[#d8b25c]">03</span>
-              <span>نطبخ مساءً بعد إغلاق الطلبات الساعة 16:00، والتوصيل 07:00–08:30 صباحًا.</span>
+              <span className="font-num font-bold text-[#c8a96e] tabular-nums">03</span>
+              <span>تُحدّد نافذة التحضير والتوصيل في ملف التشغيل بعد اعتماد المنطقة والطاقة اليومية.</span>
             </div>
             <div className="flex gap-3">
-              <span className="font-num font-bold text-[#d8b25c]">04</span>
-              <span>تسعير واضح: المكونات بسعر السوق + مناولة 7% + أجر خدمة 200 دج/وجبة.</span>
+              <span className="font-num font-bold text-[#c8a96e] tabular-nums">04</span>
+              <span>هيكل تكلفة قابل للتفصيل: مكونات + مناولة + خدمة + توصيل، وتُعتمد الأسعار الفعلية من الإدارة.</span>
             </div>
           </div>
         </div>
@@ -124,20 +129,13 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="w-full py-3.5 px-6 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
+            className="touch-press w-full py-3.5 px-6 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] hover:brightness-105 cursor-pointer"
           >
             ابدأ الحاسبة العلمية
           </button>
-          <button
-            type="button"
-            onClick={onFinish}
-            className="w-full py-3 px-6 rounded-xl font-bold text-sm text-[#f4f1e6] bg-[#1c2216] border border-[#2b3322] hover:border-[#d8b25c]/50 transition cursor-pointer"
-          >
-            دخول سريع بملف رياضي جاهز (82.4 كغ)
-          </button>
         </div>
 
-        <p className="text-center text-[11px] text-[#716e5e] mt-5">
+        <p className="text-center text-[11px] text-[#66645e] mt-5">
           أداة تغذية رياضية محسوبة، وليست بديلًا عن الاستشارة الطبية المتخصصة.
         </p>
       </div>
@@ -151,7 +149,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
           <div
             key={i}
             className={`flex-1 h-1 rounded-full transition-colors ${
-              i <= step ? 'bg-[#d8b25c]' : 'bg-[#2b3322]'
+              i <= step ? 'bg-[#c8a96e]' : 'bg-[#232329]'
             }`}
           />
         ))}
@@ -160,21 +158,26 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       {step === 1 && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-extrabold text-[#f4f1e6]">أولًا: بوابة السلامة</h2>
-            <p className="text-xs text-[#a8a493] mt-1">
+            <h2 className="text-xl font-bold text-[#f3f1ec]">أولًا: بوابة السلامة</h2>
+            <p className="text-xs text-[#96938a] mt-1">
               سلامتك أولوية قصوى قبل أي حسابات. لا نصدر خططًا آلية في الحالات الخاصة.
             </p>
           </div>
 
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
-            <label className="block text-xs font-semibold text-[#a8a493] mb-1.5">
+          <div className="rounded-xl border border-[#c8a96e]/25 bg-[#18181c] px-3 py-2.5 text-[11px] leading-5 text-[#96938a]">
+            <strong className="text-[#e6d1a3]">تنبيه الخصوصية:</strong>{' '}
+            بيانات القياسات وإجابات السلامة تُحفظ محلياً في هذا المتصفح فقط. لا توجد مزامنة أو حساب محمي في نسخة المعاينة؛ تجنب إدخال بيانات حساسة على جهاز مشترك.
+          </div>
+
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5">
+            <label className="block text-xs font-semibold text-[#96938a] mb-1.5">
               الاسم أو اللقب (يُطبع على العلبة)
             </label>
             <input
               type="text"
               value={state.name}
               onChange={(e) => onUpdate((prev) => ({ ...prev, name: e.target.value }))}
-              className="w-full bg-[#1c2216] border border-[#2b3322] rounded-xl px-3 py-2.5 text-sm text-[#f4f1e6]"
+              className="w-full bg-[#18181c] border border-[#232329] rounded-xl px-3 py-2.5 text-sm text-[#f3f1ec] focus:border-[#c8a96e] outline-none"
               placeholder="مثال: أمين بن علي"
             />
             <Stepper
@@ -182,14 +185,14 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               value={state.age}
               unit="سنة"
               step={1}
-              min={10}
+              min={18}
               max={100}
               onChange={(age) => onUpdate((prev) => ({ ...prev, age }))}
             />
           </div>
 
           <div className="space-y-2">
-            <div className="text-xs font-semibold text-[#a8a493]">هل ينطبق عليك أي مما يلي؟</div>
+            <div className="text-xs font-semibold text-[#96938a]">هل ينطبق عليك أي مما يلي؟</div>
             {(
               [
                 ['preg', 'حمل أو رضاعة طبيعية'],
@@ -204,16 +207,16 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
                   key={key}
                   type="button"
                   onClick={() => toggleFlag(key)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-right text-sm font-semibold transition cursor-pointer ${
+                  className={`touch-press w-full flex items-center justify-between px-4 py-3 rounded-xl border text-right text-sm font-semibold cursor-pointer ${
                     active
-                      ? 'bg-[#2a1512] border-[#e86a5a] text-[#f4f1e6]'
-                      : 'bg-[#141910] border-[#2b3322] text-[#f4f1e6] hover:border-[#d8b25c]/40'
+                      ? 'bg-[#1a1111] border-[#b86157] text-[#f3f1ec]'
+                      : 'bg-[#111114] border-[#232329] text-[#f3f1ec] hover:border-[#c8a96e]/40'
                   }`}
                 >
                   <span>{label}</span>
                   <span
                     className={`w-5 h-5 rounded-md flex items-center justify-center border ${
-                      active ? 'bg-[#e86a5a] border-[#e86a5a] text-[#171204]' : 'border-[#716e5e]'
+                      active ? 'bg-[#b86157] border-[#b86157] text-[#141108]' : 'border-[#66645e]'
                     }`}
                   >
                     {active && <Check className="w-3.5 h-3.5" />}
@@ -224,29 +227,32 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
           </div>
 
           {gateErr && (
-            <div className="bg-[#2a1512] border border-[#e86a5a]/60 rounded-2xl p-4 flex gap-3 items-start text-xs text-[#f4f1e6]">
-              <ShieldAlert className="w-5 h-5 text-[#e86a5a] shrink-0 mt-0.5" />
+            <div className="bg-[#1a1111] border border-[#b86157]/60 rounded-2xl p-4 flex gap-3 items-start text-xs text-[#f3f1ec]">
+              <ShieldAlert className="w-5 h-5 text-[#b86157] shrink-0 mt-0.5" />
               <div>
-                <div className="font-bold text-[#e86a5a] mb-1">حجب آلي للسلامة</div>
+                <div className="font-bold text-[#b86157] mb-1">حجب آلي للسلامة</div>
                 {gateErr}
               </div>
             </div>
+          )}
+          {!state.name.trim() && (
+            <p className="text-[11px] text-[#c89a56]">أدخل الاسم أو اللقب الذي سيظهر على ملفك قبل المتابعة.</p>
           )}
 
           <div className="flex gap-2 pt-2">
             <button
               type="button"
               onClick={() => setStep(0)}
-              className="px-4 py-3 rounded-xl bg-[#1c2216] border border-[#2b3322] text-sm font-bold text-[#f4f1e6] flex items-center gap-1 cursor-pointer"
+              className="touch-press px-4 py-3 rounded-xl bg-[#18181c] border border-[#232329] text-sm font-bold text-[#f3f1ec] flex items-center gap-1 cursor-pointer"
             >
               <ArrowRight className="w-4 h-4" />
               رجوع
             </button>
             <button
               type="button"
-              disabled={Boolean(gateErr)}
+              disabled={Boolean(gateErr) || !state.name.trim()}
               onClick={() => setStep(2)}
-              className="flex-1 py-3 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] disabled:opacity-40 cursor-pointer"
+              className="touch-press flex-1 py-3 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] disabled:opacity-40 cursor-pointer"
             >
               التالي: قياسات الجسم
             </button>
@@ -256,7 +262,10 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
 
       {step === 2 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-extrabold text-[#f4f1e6]">قياسات الجسم</h2>
+          <h2 className="text-xl font-bold text-[#f3f1ec]">قياسات الجسم</h2>
+          <div className="rounded-xl border border-[#c8a96e]/25 bg-[#18181c] px-3 py-2.5 text-[11px] leading-5 text-[#96938a]">
+            القيم الظاهرة مبدئياً أمثلة للمعاينة فقط. أدخل قياساتك الحقيقية قبل اعتماد أي نتيجة.
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             {(
@@ -269,10 +278,10 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
                 key={val}
                 type="button"
                 onClick={() => onUpdate((prev) => ({ ...prev, sex: val }))}
-                className={`py-3 rounded-xl border text-sm font-bold transition cursor-pointer ${
+                className={`touch-press py-3 rounded-xl border text-sm font-bold cursor-pointer ${
                   state.sex === val
-                    ? 'bg-[#2a2410] border-[#d8b25c] text-[#f2d491]'
-                    : 'bg-[#141910] border-[#2b3322] text-[#a8a493]'
+                    ? 'bg-[#1c1a15] border-[#c8a96e] text-[#e6d1a3]'
+                    : 'bg-[#111114] border-[#232329] text-[#96938a]'
                 }`}
               >
                 {lbl}
@@ -280,7 +289,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             ))}
           </div>
 
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5">
             <Stepper
               label="الطول"
               value={state.h}
@@ -310,11 +319,11 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             />
           </div>
 
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
-            <div className="text-sm font-bold text-[#d8b25c]">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5">
+            <div className="text-sm font-bold text-[#c8a96e]">
               الكتلة الخالية من الدهون LBM (اختياري)
             </div>
-            <p className="text-xs text-[#a8a493] mt-1">
+            <p className="text-xs text-[#96938a] mt-1">
               أدخله فقط إذا كان لديك قياس موثوق مثل DEXA أو InBody بنسبة موثوقية 70% فأكثر لتفعيل معادلة Katch-McArdle.
             </p>
             <Stepper
@@ -327,15 +336,38 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               onChange={(lbm) => onUpdate((prev) => ({ ...prev, lbm }))}
             />
             {state.lbm > 0 && (
-              <Stepper
-                label="موثوقية القياس"
-                value={state.rel}
-                unit="%"
-                step={5}
-                min={0}
-                max={100}
-                onChange={(rel) => onUpdate((prev) => ({ ...prev, rel }))}
-              />
+              <>
+                <div className="mt-2">
+                  <label className="text-xs text-[#96938a]">طريقة قياس LBM</label>
+                  <select
+                    value={state.lbmMethod ?? 'none'}
+                    onChange={(e) => onUpdate((prev) => ({
+                      ...prev,
+                      lbmMethod: e.target.value as 'none' | 'dexa' | 'inbody' | 'other',
+                    }))}
+                    className="mt-1 w-full rounded-xl border border-[#232329] bg-[#18181c] px-3 py-2.5 text-xs text-[#f3f1ec]"
+                  >
+                    <option value="none">لم أحدد / غير موثق</option>
+                    <option value="dexa">DEXA</option>
+                    <option value="inbody">InBody</option>
+                    <option value="other">قياس آخر موثق</option>
+                  </select>
+                </div>
+                <Stepper
+                  label="موثوقية القياس"
+                  value={state.rel}
+                  unit="%"
+                  step={5}
+                  min={0}
+                  max={100}
+                  onChange={(rel) => onUpdate((prev) => ({ ...prev, rel }))}
+                />
+                {(!state.lbmMethod || state.lbmMethod === 'none' || state.rel < 70) && (
+                  <p className="text-[10px] leading-5 text-[#c89a56] mt-1">
+                    ستُستخدم معادلة Mifflin حتى توثّق طريقة قياس LBM وتكون موثوقيتها 70% فأكثر.
+                  </p>
+                )}
+              </>
             )}
           </div>
 
@@ -343,14 +375,14 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="px-4 py-3 rounded-xl bg-[#1c2216] border border-[#2b3322] text-sm font-bold text-[#f4f1e6] cursor-pointer"
+              className="touch-press px-4 py-3 rounded-xl bg-[#18181c] border border-[#232329] text-sm font-bold text-[#f3f1ec] cursor-pointer"
             >
               رجوع
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="flex-1 py-3 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] cursor-pointer"
+              className="touch-press flex-1 py-3 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] cursor-pointer"
             >
               التالي: مستوى النشاط
             </button>
@@ -361,8 +393,8 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       {step === 3 && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-extrabold text-[#f4f1e6]">مستوى النشاط (4 نطاقات)</h2>
-            <p className="text-xs text-[#a8a493] mt-1">
+            <h2 className="text-xl font-bold text-[#f3f1ec]">مستوى النشاط (4 نطاقات)</h2>
+            <p className="text-xs text-[#96938a] mt-1">
               اختر النطاق الأقرب لأسبوعك ثم اضبط المعامل بدقة وفق مرجع FAO/WHO/UNU 2004.
             </p>
           </div>
@@ -378,28 +410,28 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
                   onClick={() =>
                     onUpdate((prev) => ({ ...prev, band: key, pal: band.def }))
                   }
-                  className={`w-full text-right p-3.5 rounded-xl border transition cursor-pointer ${
+                  className={`touch-press w-full text-right p-3.5 rounded-xl border cursor-pointer ${
                     active
-                      ? 'bg-[#2a2410] border-[#d8b25c]'
-                      : 'bg-[#141910] border-[#2b3322] hover:border-[#d8b25c]/40'
+                      ? 'bg-[#1c1a15] border-[#c8a96e]'
+                      : 'bg-[#111114] border-[#232329] hover:border-[#c8a96e]/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-[#f4f1e6]">{band.label}</span>
-                    <span className="font-num text-xs font-bold text-[#d8b25c]">
+                    <span className="font-bold text-sm text-[#f3f1ec]">{band.label}</span>
+                    <span className="font-num text-xs font-bold text-[#c8a96e] tabular-nums">
                       {bandRangeText(key)}
                     </span>
                   </div>
-                  <div className="text-xs text-[#a8a493] mt-1">{band.desc}</div>
+                  <div className="text-xs text-[#96938a] mt-1">{band.desc}</div>
                 </button>
               );
             })}
           </div>
 
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5">
             <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-[#a8a493] font-semibold">ضبط دقيق للمعامل</span>
-              <span className="font-num text-base font-extrabold text-[#f2d491]">
+              <span className="text-[#96938a] font-semibold">ضبط دقيق للمعامل</span>
+              <span className="font-num text-base font-bold text-[#e6d1a3] tabular-nums">
                 {state.pal.toFixed(2)}
               </span>
             </div>
@@ -412,9 +444,9 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               onChange={(e) =>
                 onUpdate((prev) => ({ ...prev, pal: parseFloat(e.target.value) }))
               }
-              className="w-full accent-[#d8b25c] cursor-pointer"
+              className="w-full accent-[#c8a96e] cursor-pointer"
             />
-            <div className="flex justify-between font-num text-[10px] text-[#716e5e] mt-1">
+            <div className="flex justify-between font-num text-[10px] text-[#66645e] mt-1 tabular-nums">
               <span>{ACTIVITY_BANDS[state.band].min.toFixed(2)}</span>
               <span>{ACTIVITY_BANDS[state.band].max.toFixed(2)}</span>
             </div>
@@ -424,14 +456,14 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="px-4 py-3 rounded-xl bg-[#1c2216] border border-[#2b3322] text-sm font-bold text-[#f4f1e6] cursor-pointer"
+              className="touch-press px-4 py-3 rounded-xl bg-[#18181c] border border-[#232329] text-sm font-bold text-[#f3f1ec] cursor-pointer"
             >
               رجوع
             </button>
             <button
               type="button"
               onClick={() => setStep(4)}
-              className="flex-1 py-3 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] cursor-pointer"
+              className="touch-press flex-1 py-3 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] cursor-pointer"
             >
               التالي: الهدف والحساسيات
             </button>
@@ -441,7 +473,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
 
       {step === 4 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-extrabold text-[#f4f1e6]">الهدف والحساسيات</h2>
+          <h2 className="text-xl font-bold text-[#f3f1ec]">الهدف والحساسيات</h2>
 
           <div className="space-y-2">
             {(Object.keys(GOALS) as GoalType[]).map((key) => {
@@ -456,19 +488,19 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
                   onClick={() =>
                     onUpdate((prev) => ({ ...prev, goal: key, pct: g.pct }))
                   }
-                  className={`w-full text-right p-3.5 rounded-xl border transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`touch-press w-full text-right p-3.5 rounded-xl border cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                     active
-                      ? 'bg-[#2a2410] border-[#d8b25c]'
-                      : 'bg-[#141910] border-[#2b3322] hover:border-[#d8b25c]/40'
+                      ? 'bg-[#1c1a15] border-[#c8a96e]'
+                      : 'bg-[#111114] border-[#232329] hover:border-[#c8a96e]/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-[#f4f1e6]">{g.label}</span>
-                    <span className="font-num text-xs font-bold text-[#d8b25c]">
+                    <span className="font-bold text-sm text-[#f3f1ec]">{g.label}</span>
+                    <span className="font-num text-xs font-bold text-[#c8a96e] tabular-nums">
                       {g.multLabel} · {g.proteinPerKg}غ/كغ
                     </span>
                   </div>
-                  <div className="text-xs text-[#a8a493] mt-1">
+                  <div className="text-xs text-[#96938a] mt-1">
                     {blockedByBmi ? 'محجوب لأن BMI أقل من 18.5' : g.desc}
                   </div>
                 </button>
@@ -476,7 +508,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             })}
           </div>
 
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4">
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5">
             <Stepper
               label="تعديل نسبة الفائض أو العجز (حد الأمان ±25%)"
               value={state.pct}
@@ -488,8 +520,8 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             />
           </div>
 
-          <div className="bg-[#141910] border border-[#2b3322] rounded-2xl p-4 space-y-3">
-            <div className="text-xs font-bold text-[#d8b25c]">الحساسيات الغذائية</div>
+          <div className="bg-[#111114] border border-[#232329] rounded-2xl p-4 sm:p-5 space-y-3">
+            <div className="text-xs font-bold text-[#c8a96e]">الحساسيات الغذائية</div>
             <div className="flex flex-wrap gap-2">
               {(Object.keys(ALLERGENS) as AllergenKey[]).map((k) => {
                 const on = state.al.includes(k);
@@ -498,10 +530,10 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
                     key={k}
                     type="button"
                     onClick={() => toggleAllergen(k)}
-                    className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                    className={`touch-press px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer ${
                       on
-                        ? 'bg-[#2a2410] border-[#d8b25c] text-[#f2d491]'
-                        : 'bg-[#1c2216] border-[#2b3322] text-[#a8a493]'
+                        ? 'bg-[#1c1a15] border-[#c8a96e] text-[#e6d1a3]'
+                        : 'bg-[#18181c] border-[#232329] text-[#96938a]'
                     }`}
                   >
                     {on ? `✓ ${ALLERGENS[k]}` : ALLERGENS[k]}
@@ -510,18 +542,18 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               })}
             </div>
 
-            <div className="pt-2 border-t border-[#2b3322]">
-              <div className="text-xs font-bold text-[#d8b25c] mb-2">
+            <div className="pt-2 border-t border-[#232329]">
+              <div className="text-xs font-bold text-[#c8a96e] mb-2">
                 مكمل البروتين (اختياري)
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => onUpdate((prev) => ({ ...prev, sup: false }))}
-                  className={`py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${
+                  className={`touch-press py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${
                     !state.sup
-                      ? 'bg-[#2a2410] border-[#d8b25c] text-[#f2d491]'
-                      : 'bg-[#1c2216] border-[#2b3322] text-[#a8a493]'
+                      ? 'bg-[#1c1a15] border-[#c8a96e] text-[#e6d1a3]'
+                      : 'bg-[#18181c] border-[#232329] text-[#96938a]'
                   }`}
                 >
                   لا أستخدم مكملًا
@@ -529,10 +561,10 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
                 <button
                   type="button"
                   onClick={() => onUpdate((prev) => ({ ...prev, sup: true }))}
-                  className={`py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${
+                  className={`touch-press py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${
                     state.sup
-                      ? 'bg-[#2a2410] border-[#d8b25c] text-[#f2d491]'
-                      : 'bg-[#1c2216] border-[#2b3322] text-[#a8a493]'
+                      ? 'bg-[#1c1a15] border-[#c8a96e] text-[#e6d1a3]'
+                      : 'bg-[#18181c] border-[#232329] text-[#96938a]'
                   }`}
                 >
                   أستخدم مكمل بروتين
@@ -556,14 +588,14 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="px-4 py-3 rounded-xl bg-[#1c2216] border border-[#2b3322] text-sm font-bold text-[#f4f1e6] cursor-pointer"
+              className="touch-press px-4 py-3 rounded-xl bg-[#18181c] border border-[#232329] text-sm font-bold text-[#f3f1ec] cursor-pointer"
             >
               رجوع
             </button>
             <button
               type="button"
               onClick={() => setStep(5)}
-              className="flex-1 py-3 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] cursor-pointer"
+              className="touch-press flex-1 py-3 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] cursor-pointer"
             >
               احسب احتياجي العلمي
             </button>
@@ -574,40 +606,40 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       {step === 5 && (
         <div className="space-y-4">
           {res.err ? (
-            <div className="bg-[#2a1512] border border-[#e86a5a] rounded-2xl p-4 flex gap-3 text-sm text-[#f4f1e6]">
-              <AlertTriangle className="w-5 h-5 text-[#e86a5a] shrink-0" />
+            <div className="bg-[#1a1111] border border-[#b86157] rounded-2xl p-4 flex gap-3 text-sm text-[#f3f1ec]">
+              <AlertTriangle className="w-5 h-5 text-[#b86157] shrink-0" />
               <div>{res.err}</div>
             </div>
           ) : (
             <>
               <div className="text-center py-2">
-                <div className="text-xs font-semibold text-[#9b988d] mb-2">احتياجك اليومي المستهدف</div>
-                <SvgRing progress={1} size={184} strokeWidth={8} color="#c9a85c" trackColor="#262b24">
-                  <div className="text-4xl font-bold text-[#e5cf94] tabular-nums">
+                <div className="text-xs font-semibold text-[#96938a] mb-2">احتياجك اليومي المستهدف</div>
+                <SvgRing progress={1} size={184} strokeWidth={8} color="#c8a96e" trackColor="#232329">
+                  <div className="text-4xl font-bold text-[#e6d1a3] tabular-nums">
                     {round0(res.kcal)}
                   </div>
-                  <div className="text-xs text-[#9b988d]">kcal / يوم</div>
+                  <div className="text-xs text-[#96938a]">kcal / يوم</div>
                 </SvgRing>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                <div className="bg-[#141714] border border-[#262b24] rounded-2xl p-3 text-center">
+                <div className="bg-[#111114] border border-[#232329] rounded-2xl p-3 text-center">
                   <div className="text-xl font-bold text-[#f3f1ec] tabular-nums">
                     {round0(res.P)} غ
                   </div>
-                  <div className="text-[11px] text-[#9b988d]">بروتين</div>
+                  <div className="text-[11px] text-[#96938a]">بروتين</div>
                 </div>
-                <div className="bg-[#141714] border border-[#262b24] rounded-2xl p-3 text-center">
+                <div className="bg-[#111114] border border-[#232329] rounded-2xl p-3 text-center">
                   <div className="text-xl font-bold text-[#f3f1ec] tabular-nums">
                     {round0(res.C)} غ
                   </div>
-                  <div className="text-[11px] text-[#9b988d]">كارب</div>
+                  <div className="text-[11px] text-[#96938a]">كارب</div>
                 </div>
-                <div className="bg-[#141714] border border-[#262b24] rounded-2xl p-3 text-center">
+                <div className="bg-[#111114] border border-[#232329] rounded-2xl p-3 text-center">
                   <div className="text-xl font-bold text-[#f3f1ec] tabular-nums">
                     {round0(res.F)} غ
                   </div>
-                  <div className="text-[11px] text-[#9b988d]">دهون</div>
+                  <div className="text-[11px] text-[#96938a]">دهون</div>
                 </div>
               </div>
 
@@ -619,7 +651,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
             <button
               type="button"
               onClick={() => setStep(4)}
-              className="px-4 py-3 rounded-xl bg-[#1c2216] border border-[#2b3322] text-sm font-bold text-[#f4f1e6] cursor-pointer"
+              className="touch-press px-4 py-3 rounded-xl bg-[#18181c] border border-[#232329] text-sm font-bold text-[#f3f1ec] cursor-pointer"
             >
               تعديل
             </button>
@@ -627,7 +659,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
               type="button"
               disabled={Boolean(res.err)}
               onClick={onFinish}
-              className="flex-1 py-3.5 rounded-xl font-extrabold text-[#171204] bg-gradient-to-l from-[#f2d491] to-[#d8b25c] disabled:opacity-40 cursor-pointer"
+              className="touch-press flex-1 py-3.5 rounded-xl font-bold text-[#141108] bg-gradient-to-l from-[#e6d1a3] to-[#c8a96e] disabled:opacity-40 cursor-pointer"
             >
               ادخل إلى التطبيق
             </button>

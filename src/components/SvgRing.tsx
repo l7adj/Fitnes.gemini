@@ -15,7 +15,7 @@ export const SvgRing: React.FC<SvgRingProps> = ({
   size,
   strokeWidth = 9,
   color,
-  trackColor = '#2b3322',
+  trackColor = '#232329',
   children,
 }) => {
   const radius = size / 2 - strokeWidth;
