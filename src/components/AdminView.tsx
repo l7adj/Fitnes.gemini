@@ -997,7 +997,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-[#9b988d]">السعر / 100غ (دج)</label>
+                <label className="text-[11px] text-[#9b988d]">السعر / 100{editingFood.cat === 'juice' ? 'مل' : 'غ'} (دج)</label>
                 <input
                   type="number"
                   value={editingFood.price}
