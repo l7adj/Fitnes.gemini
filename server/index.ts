@@ -166,10 +166,12 @@ app.put('/api/profile', authRequired, requireRole('customer'), asyncRoute(async 
   const weight = bounded(b.weightKg,30,300), target = bounded(b.targetWeightKg,30,300);
   const band = ['S','L','A','V'].includes(b.activityBand) ? b.activityBand : null;
   const pal = bounded(b.pal,1.2,2.4);
+  const palRanges: Record<string,[number,number]> = { S:[1.2,1.39], L:[1.4,1.69], A:[1.7,1.99], V:[2.0,2.4] };
+  const palValid = Boolean(band && pal !== null && pal >= palRanges[band][0] && pal <= palRanges[band][1]);
   const goal = ['bulk','cut','recomp','perf'].includes(b.goal) ? b.goal : null;
   const adjustment = bounded(b.goalAdjustmentPct,-25,25);
   if (!sex || age === null || height === null || weight === null || target === null ||
-      !band || pal === null || !goal || adjustment === null) {
+      !band || pal === null || !palValid || !goal || adjustment === null) {
     res.status(400).json({ error:'بيانات الملف ناقصة أو خارج الحدود.' }); return;
   }
   const client = await pool.connect();
@@ -344,7 +346,14 @@ app.get('/api/kitchen/orders', authRequired, requireRole('admin','kitchen','deli
     'SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.meal_count,o.production_stage,o.customer_note,u.name AS customer_name FROM customer_orders o JOIN app_users u ON u.id=o.customer_id ' + where + ' ORDER BY o.delivery_date,o.created_at',
     params
   );
-  res.json({ orders:result.rows });
+  const ids = result.rows.map((order) => order.id);
+  const lines = ids.length ? await pool.query(
+    'SELECT oi.*,COALESCE(json_agg(json_build_object(\'name\',ii.food_name_snapshot,\'grams\',ii.grams)) FILTER (WHERE ii.id IS NOT NULL),\'[]\'::json) AS ingredients FROM order_items oi LEFT JOIN order_item_ingredients ii ON ii.order_item_id=oi.id WHERE oi.order_id=ANY($1::uuid[]) GROUP BY oi.id ORDER BY oi.slot,oi.id',
+    [ids]
+  ) : { rows:[] as any[] };
+  const grouped = new Map<string,any[]>();
+  for (const line of lines.rows) grouped.set(line.order_id,[...(grouped.get(line.order_id) ?? []),line]);
+  res.json({ orders:result.rows.map((order) => ({...order,items:grouped.get(order.id) ?? []})) });
 }));
 
 app.patch('/api/kitchen/orders/:id/stage', authRequired, requireRole('admin','kitchen','delivery'), asyncRoute(async (req,res) => {
@@ -352,6 +361,12 @@ app.patch('/api/kitchen/orders/:id/stage', authRequired, requireRole('admin','ki
   const stages = ['queued','preparing','packed','out_for_delivery','delivered'];
   const stage = req.body?.stage;
   if (!stages.includes(stage)) { res.status(400).json({error:'مرحلة تشغيل غير صالحة.'}); return; }
+  if (auth.role === 'kitchen' && !['queued','preparing','packed'].includes(stage)) {
+    res.status(403).json({error:'حساب المطبخ لا يحدّث مراحل التوصيل.'}); return;
+  }
+  if (auth.role === 'delivery' && !['out_for_delivery','delivered'].includes(stage)) {
+    res.status(403).json({error:'حساب التوصيل لا يحدّث مراحل المطبخ.'}); return;
+  }
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
