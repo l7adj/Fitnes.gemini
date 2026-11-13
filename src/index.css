@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --nf-bg: #090b09;
+  --nf-surface: #111411;
+  --nf-surface-2: #171a16;
+  --nf-border: #252823;
+  --nf-gold: #c9a85c;
+  --nf-gold-light: #e5cf94;
+  --nf-text: #f3f1ec;
+  --nf-muted: #9b988d;
+  --nf-dim: #6d6b62;
+  --nf-ok: #5aa882;
+  --nf-warn: #d4a24c;
+  --nf-bad: #c45d51;
+}
+
+@layer base {
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Arial, sans-serif;
+    background-color: var(--nf-bg);
+    color: var(--nf-text);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: #090b09;
+    min-height: 100vh;
+  }
+
+  input[type='number'] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.font-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+:focus-visible {
+  outline: 2px solid #c9a85c;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

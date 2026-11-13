@@ -1,0 +1,291 @@
+import {
+  ActivityBand,
+  AllergenKey,
+  AppState,
+  DeliveryZone,
+  DishItem,
+  FoodItem,
+  GoalType,
+  PricingConfig,
+} from '../types';
+
+export const STATE_VERSION = 'nf-dz-v2';
+
+export const ACTIVITY_BANDS: Record<
+  ActivityBand,
+  { min: number; max: number; def: number; label: string; desc: string }
+> = {
+  S: {
+    min: 1.2,
+    max: 1.39,
+    def: 1.3,
+    label: 'محدود الحركة',
+    desc: 'عمل مكتبي مع حركة يومية محدودة وبدون تدريب منظم',
+  },
+  L: {
+    min: 1.4,
+    max: 1.69,
+    def: 1.55,
+    label: 'خفيف',
+    desc: 'مكتبي أو حركة متوسطة وتدريب يومان أسبوعيًا',
+  },
+  A: {
+    min: 1.7,
+    max: 1.99,
+    def: 1.85,
+    label: 'نشط',
+    desc: 'حركة يومية وتدريب 3 إلى 5 أيام في الأسبوع',
+  },
+  V: {
+    min: 2.0,
+    max: 2.4,
+    def: 2.2,
+    label: 'شديد',
+    desc: 'عمل بدني شاق أو تدريب مكثف يوميًا',
+  },
+};
+
+export const GOALS: Record<
+  GoalType,
+  {
+    label: string;
+    desc: string;
+    multLabel: string;
+    pct: number;
+    proteinPerKg: number;
+    targetRateKgWk: number;
+  }
+> = {
+  bulk: {
+    label: 'بناء عضل',
+    desc: 'فائض طاقة مدروس لدعم الاستشفاء والبناء العضلي',
+    multLabel: '×1.10 (+10%)',
+    pct: 10,
+    proteinPerKg: 1.9,
+    targetRateKgWk: 0.25,
+  },
+  cut: {
+    label: 'خسارة دهون',
+    desc: 'عجز طاقة منضبط مع بروتين مرتفع لحفظ الكتلة العضلية',
+    multLabel: '×0.80 (−20%)',
+    pct: -20,
+    proteinPerKg: 2.2,
+    targetRateKgWk: -0.5,
+  },
+  recomp: {
+    label: 'إعادة تشكيل',
+    desc: 'عجز خفيف لتحسين التركيبة الجسدية تدريجيًا',
+    multLabel: '×0.90 (−10%)',
+    pct: -10,
+    proteinPerKg: 1.8,
+    targetRateKgWk: -0.15,
+  },
+  perf: {
+    label: 'أداء رياضي',
+    desc: 'توازن سعرات لدعم الشدة البدنية والثبات الوزني',
+    multLabel: '×1.00 (ثبات)',
+    pct: 0,
+    proteinPerKg: 1.8,
+    targetRateKgWk: 0,
+  },
+};
+
+export const ALLERGENS: Record<AllergenKey, string> = {
+  gluten: 'غلوتين',
+  eggs: 'بيض',
+  fish: 'سمك',
+  milk: 'حليب',
+  nuts: 'مكسرات',
+};
+
+export const DEFAULT_ZONES: DeliveryZone[] = [
+  {
+    id: 'pickup',
+    title: 'استلام من المطبخ',
+    areas: 'الشراقة — المطبخ المركزي',
+    hours: '06:30 – 08:00 صباحًا',
+    fee: 0,
+    active: true,
+  },
+  {
+    id: 'z1',
+    title: 'المنطقة 1',
+    areas: 'الشراقة · دالي إبراهيم · أولاد فايت',
+    hours: '07:00 – 08:30 صباحًا',
+    fee: 150,
+    active: true,
+  },
+  {
+    id: 'z2',
+    title: 'المنطقة 2',
+    areas: 'عين البنيان · سطاوالي · الدرارية',
+    hours: '07:00 – 08:30 صباحًا',
+    fee: 300,
+    active: true,
+  },
+  {
+    id: 'z3',
+    title: 'المنطقة 3',
+    areas: 'زرالدة وما بعدها',
+    hours: '07:00 – 08:30 صباحًا',
+    fee: 500,
+    active: true,
+  },
+];
+
+export const DEFAULT_PRICING: PricingConfig = {
+  handlingPct: 7,
+  serviceFeePerMeal: 200,
+  cutoffHour: 16,
+};
+
+export const QUALITY_CHARTER: string[] = [
+  'كل علبة تُوزن بالغرام بدقة ±1غ قبل التغليف.',
+  'كل وصفة تعتمد غرامات ثابتة ومحسوبة مخبريًا.',
+  'كل علبة تحمل اسم العميل وماكروز الوجبة ورمز QR للتتبع.',
+  'الطعام طازج بالكامل، لا نشتري ولا نطبخ إلا بعد تأكيد الطلب.',
+  'التبريد والحفظ الحراري جزء إلزامي من سلسلة التشغيل الليلية.',
+  'الوجبة مخصصة للاستهلاك في نفس اليوم لضمان الجودة والسلامة.',
+  'العميل يتابع وزنه أسبوعيًا لتقييم الاستجابة الحقيقية.',
+  'السعر شفاف بالكامل: مكونات بسعر السوق + مناولة + أجر خدمة + توصيل.',
+  'عدد الطلبات اليومي مضبوط بالطاقة التشغيلية للمطبخ لا بأوهام تسويقية.',
+  'الهدف ليس أكبر عدد من المشتركين، بل أعلى دقة والتزام وخدمة.',
+];
+
+export const PICKUP_POINTS = [
+  {
+    name: 'مطبخ الشراقة المركزي',
+    area: 'الشراقة · الجزائر العاصمة',
+    hours: '06:30 – 08:00 صباحًا',
+    status: 'نشط الآن',
+    active: true,
+  },
+  {
+    name: 'نقطة استلام دالي إبراهيم (شريك رياضي)',
+    area: 'دالي إبراهيم · صالة شريكة',
+    hours: '07:00 – 09:00 صباحًا',
+    status: 'قريبًا — المرحلة 4',
+    active: false,
+  },
+  {
+    name: 'نقطة استلام أولاد فايت (شريك رياضي)',
+    area: 'أولاد فايت · صالة شريكة',
+    hours: '07:00 – 09:00 صباحًا',
+    status: 'قريبًا — المرحلة 4',
+    active: false,
+  },
+];
+
+export function seedFoods(): FoodItem[] {
+  return [
+    { id: 'chk', emoji: '🍗', name: 'صدر دجاج مشوي', cat: 'protein', per100: { kcal: 165, p: 31, c: 0, f: 3.6, fiber: 0 }, price: 52, al: [], available: true },
+    { id: 'sal', emoji: '🐟', name: 'فيليه سلمون', cat: 'protein', per100: { kcal: 206, p: 22, c: 0, f: 12, fiber: 0 }, price: 165, al: ['fish'], available: true },
+    { id: 'tun', emoji: '🐟', name: 'تونة طبيعية بالماء', cat: 'protein', per100: { kcal: 116, p: 26, c: 0, f: 0.8, fiber: 0 }, price: 95, al: ['fish'], available: true },
+    { id: 'egg', emoji: '🥚', name: 'بيض مسلوق', cat: 'protein', per100: { kcal: 155, p: 13, c: 1.1, f: 11, fiber: 0 }, price: 28, al: ['eggs'], available: true },
+    { id: 'beef', emoji: '🥩', name: 'لحم بقري قليل الدسم', cat: 'protein', per100: { kcal: 215, p: 27, c: 0, f: 11, fiber: 0 }, price: 110, al: [], available: true },
+    { id: 'cot', emoji: '🧀', name: 'جبن قريش طازج', cat: 'protein', per100: { kcal: 98, p: 11, c: 3.4, f: 4.3, fiber: 0 }, price: 45, al: ['milk'], available: true },
+    { id: 'len', emoji: '🥘', name: 'عدس مطبوخ', cat: 'protein', per100: { kcal: 116, p: 9, c: 20, f: 0.4, fiber: 7.9 }, price: 14, al: [], available: true },
+
+    { id: 'ric', emoji: '🍚', name: 'أرز بسمتي أبيض', cat: 'carb', per100: { kcal: 130, p: 2.7, c: 28, f: 0.3, fiber: 0.4 }, price: 14, al: [], available: true },
+    { id: 'pas', emoji: '🍝', name: 'معكرونة قمح', cat: 'carb', per100: { kcal: 158, p: 5.8, c: 31, f: 0.9, fiber: 1.8 }, price: 16, al: ['gluten'], available: true },
+    { id: 'swp', emoji: '🍠', name: 'بطاطا حلوة مشوية', cat: 'carb', per100: { kcal: 90, p: 2, c: 21, f: 0.2, fiber: 3.3 }, price: 12, al: [], available: true },
+    { id: 'pot', emoji: '🥔', name: 'بطاطا مسلوقة', cat: 'carb', per100: { kcal: 87, p: 1.9, c: 20, f: 0.1, fiber: 1.8 }, price: 9, al: [], available: true },
+    { id: 'oat', emoji: '🥣', name: 'شوفان مطبوخ', cat: 'carb', per100: { kcal: 71, p: 2.5, c: 12, f: 1.5, fiber: 1.7 }, price: 18, al: ['gluten'], available: true },
+    { id: 'brd', emoji: '🍞', name: 'خبز كامل', cat: 'carb', per100: { kcal: 247, p: 13, c: 41, f: 3.4, fiber: 7 }, price: 10, al: ['gluten'], available: true },
+
+    { id: 'oil', emoji: '🫒', name: 'زيت زيتون بكر', cat: 'fat', per100: { kcal: 884, p: 0, c: 0, f: 100, fiber: 0 }, price: 75, al: [], available: true },
+    { id: 'alm', emoji: '🌰', name: 'لوز طبيعي', cat: 'fat', per100: { kcal: 579, p: 21, c: 22, f: 50, fiber: 12.5 }, price: 135, al: ['nuts'], available: true },
+    { id: 'avc', emoji: '🥑', name: 'أفوكادو طازج', cat: 'fat', per100: { kcal: 160, p: 2, c: 9, f: 15, fiber: 7 }, price: 65, al: [], available: true },
+
+    { id: 'bro', emoji: '🥦', name: 'بروكلي على البخار', cat: 'veg', per100: { kcal: 35, p: 2.4, c: 7.2, f: 0.4, fiber: 3.3 }, price: 18, al: [], available: true },
+    { id: 'grb', emoji: '🫛', name: 'لوبيا خضراء', cat: 'veg', per100: { kcal: 31, p: 1.8, c: 7, f: 0.2, fiber: 2.7 }, price: 15, al: [], available: true },
+    { id: 'sald', emoji: '🥗', name: 'سلطة خضراء موسمية', cat: 'veg', per100: { kcal: 20, p: 1.2, c: 3.6, f: 0.2, fiber: 1.8 }, price: 12, al: [], available: true },
+
+    { id: 'j_ora', emoji: '🍊', name: 'عصير برتقال طبيعي', cat: 'juice', unitLabel: '100مل', per100: { kcal: 45, p: 0.7, c: 10.4, f: 0.2, fiber: 0.2 }, price: 22, al: [], available: true },
+    { id: 'j_app', emoji: '🍏', name: 'عصير تفاح طازج', cat: 'juice', unitLabel: '100مل', per100: { kcal: 46, p: 0.1, c: 11.3, f: 0.1, fiber: 0.2 }, price: 24, al: [], available: true },
+    { id: 'j_pom', emoji: '🍷', name: 'عصير رمان صافي', cat: 'juice', unitLabel: '100مل', per100: { kcal: 54, p: 0.2, c: 13.1, f: 0.3, fiber: 0.1 }, price: 32, al: [], available: true },
+    { id: 'j_car', emoji: '🥕', name: 'عصير جزر طازج', cat: 'juice', unitLabel: '100مل', per100: { kcal: 40, p: 0.9, c: 9.3, f: 0.2, fiber: 0.8 }, price: 20, al: [], available: true },
+    { id: 'j_ban', emoji: '🍌', name: 'سموذي موز وحليب', cat: 'juice', unitLabel: '100مل', per100: { kcal: 76, p: 3.1, c: 13.5, f: 1.2, fiber: 0.9 }, price: 28, al: ['milk'], available: true },
+    { id: 'j_str', emoji: '🍓', name: 'سموذي فراولة', cat: 'juice', unitLabel: '100مل', per100: { kcal: 42, p: 0.8, c: 9.6, f: 0.3, fiber: 1.4 }, price: 30, al: [], available: true },
+    { id: 'j_avc', emoji: '🥑', name: 'سموذي أفوكادو', cat: 'juice', unitLabel: '100مل', per100: { kcal: 112, p: 2.1, c: 8.5, f: 8.2, fiber: 3.1 }, price: 42, al: [], available: true },
+    { id: 'j_lem', emoji: '🍋', name: 'ليمونادة طازجة بالنعناع', cat: 'juice', unitLabel: '100مل', per100: { kcal: 28, p: 0.3, c: 7.2, f: 0.1, fiber: 0.2 }, price: 18, al: [], available: true },
+  ];
+}
+
+export function seedDishes(): DishItem[] {
+  return [
+    { id: 'd1', emoji: '🍗', name: 'دجاج مشوي مع أرز وبروكلي', ing: [['chk', 180], ['ric', 200], ['bro', 100]], available: true },
+    { id: 'd2', emoji: '🐟', name: 'سلمون مع بطاطا حلوة وبروكلي', ing: [['sal', 160], ['swp', 220], ['bro', 100]], available: true },
+    { id: 'd3', emoji: '🥘', name: 'عدس مع أرز وزيت زيتون', ing: [['len', 250], ['ric', 150], ['oil', 10]], available: true },
+    { id: 'd4', emoji: '🍝', name: 'تونة مع معكرونة وزيت زيتون', ing: [['tun', 150], ['pas', 220], ['oil', 8]], available: true },
+    { id: 'd5', emoji: '🥣', name: 'شوفان مع بيض مسلوق ولوز', ing: [['oat', 250], ['egg', 120], ['alm', 20]], available: true },
+    { id: 'd6', emoji: '🧀', name: 'جبن قريش مع خبز كامل ولوز', ing: [['cot', 220], ['brd', 70], ['alm', 20]], available: true },
+  ];
+}
+
+export const DEFAULT_MEAL_NAMES: string[] = [
+  'الوجبة الأولى · صباحية',
+  'الوجبة الثانية · بعد التمرين',
+  'الوجبة الثالثة · عشاء',
+  'الوجبة الرابعة · إضافية',
+  'الوجبة الخامسة · مسائية',
+];
+
+export function createInitialState(): AppState {
+  const now = new Date();
+  const fmt = (daysAgo: number) => {
+    const d = new Date(now.getTime() - daysAgo * 86400000);
+    return d.toISOString().slice(0, 10);
+  };
+  return {
+    ver: STATE_VERSION,
+    ob: 0,
+    name: 'رياضي الشراقة',
+    sex: 'm',
+    age: 28,
+    h: 178,
+    w: 82.4,
+    targetWeight: 80,
+    lbm: 0,
+    rel: 0,
+    band: 'A',
+    pal: 1.85,
+    goal: 'recomp',
+    pct: -10,
+    al: [],
+    fl: { preg: false, kid: false, dia: false, ed: false },
+    sup: false,
+    supg: 30,
+    foods: seedFoods(),
+    dishes: seedDishes(),
+    zones: DEFAULT_ZONES.map((z) => ({ ...z })),
+    pricingConfig: { ...DEFAULT_PRICING },
+    meals: [],
+    n: 3,
+    activeSlot: 0,
+    mealNames: [...DEFAULT_MEAL_NAMES],
+    zoneId: 'z1',
+    orderNote: '',
+    ord: [],
+    jr: [
+      { d: fmt(20), w: 84.1 },
+      { d: fmt(17), w: 83.8 },
+      { d: fmt(14), w: 83.5 },
+      { d: fmt(11), w: 83.2 },
+      { d: fmt(7), w: 82.9 },
+      { d: fmt(4), w: 82.6 },
+      { d: fmt(1), w: 82.4 },
+    ],
+    photos: [],
+    cap: 60,
+    adh: 92,
+    cal: [],
+    calDismissedDate: null,
+    tab: 'home',
+    adminMode: false,
+    menuFilter: 'dishes',
+    ingFilter: 'all',
+    menuSearch: '',
+    chartRange: '1m',
+  };
+}

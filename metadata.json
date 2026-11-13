@@ -1,0 +1,6 @@
+{
+  "name": "NutriFit DZ",
+  "description": "مطبخ رياضي خاص وتطبيق تغذية محسوب بالغرام للرياضيين في الجزائر — حساب علمي، طبخ مخصص، توصيل صباحي، ومتابعة تطور الجسم.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
