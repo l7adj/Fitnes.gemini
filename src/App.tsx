@@ -31,6 +31,7 @@ interface ToastItem {
 
 function loadState(): AppState {
   const defaults = createInitialState();
+  if (API_ENABLED) return defaults;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
