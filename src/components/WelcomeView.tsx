@@ -30,9 +30,6 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStart }) => (
           <span className="mt-0.5 block text-[9px] tracking-[.28em] text-[#9e967f]">PRIVATE NUTRITION · DZ</span>
         </span>
       </a>
-      <div className="absolute top-[5.6rem] right-5 z-20 rounded-full border border-[#d4a24c]/30 bg-[#241e12]/90 px-3 py-1.5 text-[10px] text-[#e5cf94] sm:right-8 lg:right-12">
-        نسخة معاينة تفاعلية · لا تستقبل طلبات فعلية
-      </div>
       <div className="hidden items-center gap-7 text-[12px] text-[#b8b4a8] md:flex">
         <a href="#method" className="transition hover:text-[#e4d1a2]">منهجيتنا</a>
         <a href="#experience" className="transition hover:text-[#e4d1a2]">التجربة</a>
@@ -47,7 +44,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStart }) => (
       <div className="max-w-2xl">
         <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#c4aa70]/25 bg-[#c4aa70]/[.07] px-4 py-2 text-[10px] tracking-wide text-[#d6c28f]">
           <span className="h-1.5 w-1.5 rounded-full bg-[#c8ae73]" />
-          تغذية رياضية مصممة حولك
+          معاينة تفاعلية · لا تستقبل طلبات فعلية
         </div>
         <h1 className="max-w-xl text-[2.65rem] font-semibold leading-[1.28] tracking-[-.045em] text-[#f4f0e6] sm:text-5xl lg:text-[4.15rem]">
           أداؤك يستحق<br />
