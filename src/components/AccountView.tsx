@@ -147,11 +147,15 @@ export const AccountView: React.FC<AccountViewProps> = ({
               onClick={() => setShowBulletin((s) => !s)}
               className="w-full flex items-center justify-between text-sm font-bold text-[#f3f1ec] cursor-pointer"
             >
-              <span>نشرة السوق الأسبوعية المجمّدة</span>
+              <span>أسعار المكونات التجريبية</span>
               <span className="text-xs text-[#c9a85c]">{showBulletin ? 'إخفاء' : 'عرض الأسعار'}</span>
             </button>
             {showBulletin && (
-              <div className="pt-2 border-t border-[#222520] max-h-64 overflow-y-auto divide-y divide-[#222520]">
+              <>
+                <p className="pt-2 border-t border-[#222520] text-[11px] leading-5 text-[#d4a24c]">
+                  الأسعار التالية أمثلة مبدئية للواجهة وليست أسعار سوق موثقة أو عروض شراء حالية.
+                </p>
+                <div className="max-h-64 overflow-y-auto divide-y divide-[#222520]">
                 {state.foods.map((f) => (
                   <div
                     key={f.id}
@@ -170,7 +174,8 @@ export const AccountView: React.FC<AccountViewProps> = ({
                     </span>
                   </div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
           </div>
 
