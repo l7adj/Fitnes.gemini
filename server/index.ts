@@ -381,8 +381,13 @@ app.patch('/api/kitchen/orders/:id/stage', authRequired, requireRole('admin','ki
     );
     if (!found.rowCount) { await client.query('ROLLBACK'); res.status(404).json({error:'الطلب غير موجود.'}); return; }
     const current = found.rows[0].production_stage ?? 'queued';
-    if (stages.indexOf(stage) < stages.indexOf(current)) {
+    const currentIndex = stages.indexOf(current);
+    const nextIndex = stages.indexOf(stage);
+    if (nextIndex < currentIndex) {
       await client.query('ROLLBACK'); res.status(409).json({error:'لا يمكن إرجاع الطلب إلى مرحلة سابقة.'}); return;
+    }
+    if (auth.role !== 'admin' && nextIndex > currentIndex + 1) {
+      await client.query('ROLLBACK'); res.status(409).json({error:'يجب إكمال مرحلة التشغيل الحالية قبل الانتقال إلى المرحلة التالية.'}); return;
     }
     await client.query('UPDATE customer_orders SET production_stage=$1,updated_at=now() WHERE id=$2',[stage,req.params.id]);
     await audit(client,auth.id,'order.stage.updated','customer_order',req.params.id,{from:current,to:stage});
@@ -536,7 +541,7 @@ app.get('/api/admin/zones', authRequired, requireRole('admin'), asyncRoute(async
 
 app.get('/api/admin/orders', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
   const result = await pool.query(
-    "SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.meal_count,o.total_dzd,o.order_status,o.production_stage,o.payment_status,u.name AS customer_name,u.email AS customer_email FROM customer_orders o JOIN app_users u ON u.id=o.customer_id ORDER BY o.created_at DESC LIMIT 250"
+    "SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.meal_count,o.total_dzd,o.order_status,o.production_stage,o.payment_status,u.name AS customer_name,u.email AS customer_email,(SELECT COALESCE(json_agg(json_build_object('label',oi.label,'grams',oi.grams,'slot_name',oi.slot_name,'kcal',oi.kcal,'protein',oi.protein)),'[]'::json) FROM order_items oi WHERE oi.order_id=o.id) AS items FROM customer_orders o JOIN app_users u ON u.id=o.customer_id ORDER BY o.created_at DESC LIMIT 250"
   );
   res.json({orders:result.rows});
 }));
