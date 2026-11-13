@@ -227,6 +227,9 @@ export const CartView: React.FC<CartViewProps> = ({
         const response = await apiRequest<{ order: {
           id: string; order_number: string; delivery_date: string; order_status: string;
           total_dzd: number | string; production_stage: Order['productionStage'];
+          delivery_fee_dzd: number | string; ingredient_cost_dzd: number | string;
+          handling_fee_dzd: number | string; service_fee_dzd: number | string;
+          kcal_total: number | string; protein_total: number | string; carbs_total: number | string; fat_total: number | string;
         } }>('/api/orders', authToken, {
           method: 'POST',
           body: JSON.stringify({
@@ -248,6 +251,14 @@ export const CartView: React.FC<CartViewProps> = ({
           id: response.order.id,
           date: String(response.order.delivery_date).slice(0, 10),
           total: Number(response.order.total_dzd),
+          zoneFee: Number(response.order.delivery_fee_dzd),
+          ingCost: Number(response.order.ingredient_cost_dzd),
+          handling: Number(response.order.handling_fee_dzd),
+          service: Number(response.order.service_fee_dzd),
+          kcal: Number(response.order.kcal_total),
+          p: Number(response.order.protein_total),
+          c: Number(response.order.carbs_total),
+          f: Number(response.order.fat_total),
           status: response.order.order_status === 'confirmed' ? 'C' : 'W',
           productionStage: response.order.production_stage ?? undefined,
         };
