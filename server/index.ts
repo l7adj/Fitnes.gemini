@@ -448,6 +448,11 @@ app.get('/api/dishes', asyncRoute(async (_req,res) => {
   res.json({dishes:result.rows});
 }));
 
+app.get('/api/admin/staff', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
+  const result = await pool.query("SELECT id,name,email,role FROM app_users WHERE role IN ('kitchen','delivery','admin') ORDER BY role,name");
+  res.json({staff:result.rows});
+}));
+
 app.get('/api/admin/settings', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
   const result = await pool.query('SELECT handling_pct,service_fee_per_meal,cutoff_hour,daily_capacity_boxes,updated_at FROM pricing_config WHERE id=1');
   res.json({settings:result.rows[0] ?? null});
