@@ -290,7 +290,7 @@ app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async 
     }),{kcal:0,protein:0,carbs:0,fat:0});
     const number = orderNumber();
     const inserted = await client.query(
-      'INSERT INTO customer_orders (order_number,customer_id,delivery_date,delivery_zone_id,delivery_zone_title,delivery_fee_dzd,meal_count,customer_note,ingredient_cost_dzd,handling_fee_dzd,service_fee_dzd,total_dzd,kcal_total,protein_total,carbs_total,fat_total,order_status,production_stage) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING id,order_number,delivery_date,order_status,total_dzd,production_stage',
+      'INSERT INTO customer_orders (order_number,customer_id,delivery_date,delivery_zone_id,delivery_zone_title,delivery_fee_dzd,meal_count,customer_note,ingredient_cost_dzd,handling_fee_dzd,service_fee_dzd,total_dzd,kcal_total,protein_total,carbs_total,fat_total,order_status,production_stage) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING id,order_number,delivery_date,order_status,total_dzd,production_stage,delivery_fee_dzd,ingredient_cost_dzd,handling_fee_dzd,service_fee_dzd,kcal_total,protein_total,carbs_total,fat_total',
       [number,auth.id,deliveryDate,zone.id,zone.title,Number(zone.fee_dzd),mealCount,note,
        ingredientCost,handlingFee,serviceFee,ingredientCost+handlingFee+serviceFee+Number(zone.fee_dzd),
        macros.kcal,macros.protein,macros.carbs,macros.fat,orderStatus,orderStatus==='confirmed'?'queued':null]
