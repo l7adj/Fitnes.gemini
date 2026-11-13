@@ -529,6 +529,18 @@ app.patch('/api/admin/dishes/:id/active', authRequired, requireRole('admin'), as
   res.json({dish:result.rows[0]});
 }));
 
+app.get('/api/admin/zones', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
+  const result = await pool.query('SELECT * FROM delivery_zones ORDER BY created_at DESC');
+  res.json({zones:result.rows});
+}));
+
+app.get('/api/admin/orders', authRequired, requireRole('admin'), asyncRoute(async (_req,res) => {
+  const result = await pool.query(
+    "SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.meal_count,o.total_dzd,o.order_status,o.production_stage,o.payment_status,u.name AS customer_name,u.email AS customer_email FROM customer_orders o JOIN app_users u ON u.id=o.customer_id ORDER BY o.created_at DESC LIMIT 250"
+  );
+  res.json({orders:result.rows});
+}));
+
 app.post('/api/admin/zones', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
   const title = cleanText(req.body?.title,2,120);
   const areas = cleanText(req.body?.areas,2,500);
@@ -581,7 +593,7 @@ app.post('/api/admin/orders/:id/assign-delivery', authRequired, requireRole('adm
 app.get('/api/delivery/orders', authRequired, requireRole('delivery'), asyncRoute(async (req,res) => {
   const auth = (req as AuthRequest).auth!;
   const result = await pool.query(
-    "SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.production_stage,u.name AS customer_name FROM customer_orders o JOIN app_users u ON u.id=o.customer_id WHERE o.delivery_user_id=$1 AND o.order_status='confirmed' ORDER BY o.delivery_date,o.created_at",
+    "SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.production_stage,u.name AS customer_name,(SELECT COALESCE(json_agg(json_build_object('label',oi.label,'grams',oi.grams,'slot_name',oi.slot_name)),'[]'::json) FROM order_items oi WHERE oi.order_id=o.id) AS items FROM customer_orders o JOIN app_users u ON u.id=o.customer_id WHERE o.delivery_user_id=$1 AND o.order_status='confirmed' ORDER BY o.delivery_date,o.created_at",
     [auth.id]
   );
   res.json({orders:result.rows});
