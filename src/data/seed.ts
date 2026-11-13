@@ -255,6 +255,7 @@ export function createInitialState(): AppState {
     targetWeight: 80,
     lbm: 0,
     rel: 0,
+    lbmMethod: 'none',
     band: 'A',
     pal: 1.7,
     goal: 'recomp',
