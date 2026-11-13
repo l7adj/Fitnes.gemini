@@ -1,0 +1,383 @@
+import express, { Request, Response, NextFunction, RequestHandler } from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import bcrypt from 'bcryptjs';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import { Pool, PoolClient } from 'pg';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+type Role = 'customer' | 'admin' | 'kitchen' | 'delivery';
+type AuthRequest = Request & { auth?: { id: string; role: Role } };
+type Ingredient = { id:string; name:string; grams:number; price:number; kcal:number; protein:number; carbs:number; fat:number };
+const PORT = Number(process.env.PORT || 3000);
+const DATABASE_URL = process.env.DATABASE_URL;
+const JWT_SECRET = process.env.JWT_SECRET || '';
+if (!DATABASE_URL) throw new Error('DATABASE_URL is required');
+if (JWT_SECRET.length < 32) throw new Error('JWT_SECRET must contain at least 32 characters');
+
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+  max: Number(process.env.DB_POOL_MAX || 10),
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
+const app = express();
+app.disable('x-powered-by');
+app.use(helmet());
+if (process.env.APP_ORIGIN) {
+  app.use(cors({ origin: process.env.APP_ORIGIN.split(',').map((x) => x.trim()), credentials: true }));
+}
+app.use(express.json({ limit: '256kb' }));
+const authLimiter = rateLimit({ windowMs: 900000, limit: 12, standardHeaders: 'draft-8', legacyHeaders: false });
+
+function asyncRoute(fn: (req: AuthRequest, res: Response) => Promise<void>): RequestHandler {
+  return (req, res, next) => { void fn(req as AuthRequest, res).catch(next); };
+}
+function authRequired(req: Request, res: Response, next: NextFunction) {
+  const token = req.header('authorization')?.replace(/^Bearer\s+/i, '');
+  if (!token) { res.status(401).json({ error: 'يلزم تسجيل الدخول.' }); return; }
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    if (!payload.sub || !['customer','admin','kitchen','delivery'].includes(String(payload.role))) {
+      res.status(401).json({ error: 'جلسة غير صالحة.' }); return;
+    }
+    (req as AuthRequest).auth = { id: String(payload.sub), role: payload.role as Role };
+    next();
+  } catch { res.status(401).json({ error: 'انتهت الجلسة أو أنها غير صالحة.' }); }
+}
+function requireRole(...roles: Role[]): RequestHandler {
+  return (req, res, next) => {
+    const auth = (req as AuthRequest).auth;
+    if (!auth || !roles.includes(auth.role)) { res.status(403).json({ error: 'ليس لديك صلاحية.' }); return; }
+    next();
+  };
+}
+function cleanText(value: unknown, min = 1, max = 500): string | null {
+  if (typeof value !== 'string') return null;
+  const result = value.trim();
+  return result.length >= min && result.length <= max ? result : null;
+}
+function bounded(value: unknown, min: number, max: number): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+function tokenFor(user: { id: string; role: Role }) {
+  return jwt.sign({ role: user.role }, JWT_SECRET, { subject: user.id, expiresIn: '12h' });
+}
+function localDateAndHour() {
+  const parts: Record<string,string> = {};
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Algiers', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date()).forEach((part) => { parts[part.type] = part.value; });
+  return { date: parts.year + '-' + parts.month + '-' + parts.day, hour: Number(parts.hour) };
+}
+function addDays(date: string, days: number) {
+  const d = new Date(date + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0,10);
+}
+function orderNumber() {
+  return 'NF-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(100000 + Math.random() * 900000);
+}
+async function audit(client: PoolClient, actor: string, action: string, type: string, id: string, details = {}) {
+  await client.query(
+    'INSERT INTO audit_log (actor_id,action,entity_type,entity_id,details) VALUES ($1,$2,$3,$4,$5)',
+    [actor,action,type,id,JSON.stringify(details)]
+  );
+}
+
+app.get('/api/health', asyncRoute(async (_req,res) => {
+  await pool.query('SELECT 1');
+  res.json({ status:'ok', database:'connected', service:'nutrifit-api' });
+}));
+
+app.post('/api/auth/register', authLimiter, asyncRoute(async (req,res) => {
+  const name = cleanText(req.body?.name,2,100);
+  const email = cleanText(req.body?.email,5,254)?.toLowerCase();
+  const password = cleanText(req.body?.password,12,128);
+  if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password) {
+    res.status(400).json({ error:'أدخل اسماً وبريداً صحيحاً وكلمة مرور من 12 حرفاً على الأقل.' }); return;
+  }
+  try {
+    const result = await pool.query(
+      'INSERT INTO app_users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id,name,email,role',
+      [name,email,await bcrypt.hash(password,12),'customer']
+    );
+    res.status(201).json({ user:result.rows[0], token:tokenFor(result.rows[0]) });
+  } catch (error: any) {
+    if (error?.code === '23505') { res.status(409).json({ error:'هذا البريد مسجل بالفعل.' }); return; }
+    throw error;
+  }
+}));
+
+app.post('/api/auth/login', authLimiter, asyncRoute(async (req,res) => {
+  const email = cleanText(req.body?.email,5,254)?.toLowerCase();
+  const password = cleanText(req.body?.password,1,128);
+  if (!email || !password) { res.status(400).json({ error:'أدخل البريد وكلمة المرور.' }); return; }
+  const result = await pool.query('SELECT id,name,email,password_hash,role FROM app_users WHERE email=$1',[email]);
+  const user = result.rows[0];
+  if (!user || !(await bcrypt.compare(password,user.password_hash))) {
+    res.status(401).json({ error:'البريد أو كلمة المرور غير صحيحة.' }); return;
+  }
+  res.json({ user:{id:user.id,name:user.name,email:user.email,role:user.role}, token:tokenFor(user) });
+}));
+
+app.get('/api/auth/me', authRequired, asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const result = await pool.query('SELECT id,name,email,role,created_at FROM app_users WHERE id=$1',[auth.id]);
+  if (!result.rowCount) { res.status(404).json({ error:'الحساب غير موجود.' }); return; }
+  res.json({ user:result.rows[0] });
+}));
+
+app.get('/api/foods', asyncRoute(async (_req,res) => {
+  const result = await pool.query(
+    "SELECT id,code,name_ar,name_fr,name_en,category,kcal_per_100,protein_per_100,carbs_per_100,fat_per_100,fiber_per_100,price_dzd_per_100,allergens,nutrition_basis,nutrition_source,source_record_id FROM foods WHERE active=true AND nutrition_verified=true AND nutrition_basis <> 'unspecified' ORDER BY category,name_ar"
+  );
+  res.json({ foods:result.rows });
+}));
+app.get('/api/zones', asyncRoute(async (_req,res) => {
+  const result = await pool.query('SELECT id,title,areas,service_hours,fee_dzd FROM delivery_zones WHERE active=true ORDER BY title');
+  res.json({ zones:result.rows });
+}));
+
+app.get('/api/profile', authRequired, asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const result = await pool.query(
+    'SELECT u.id,u.name,u.email,u.allergens,p.sex,p.age,p.height_cm,p.weight_kg,p.target_weight_kg,p.activity_band,p.pal,p.goal,p.goal_adjustment_pct,p.health_flags,p.profile_version FROM app_users u LEFT JOIN customer_profiles p ON p.user_id=u.id WHERE u.id=$1',
+    [auth.id]
+  );
+  res.json({ profile:result.rows[0] ?? null });
+}));
+
+app.put('/api/profile', authRequired, requireRole('customer'), asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const b = req.body ?? {};
+  const allowed = new Set(['gluten','eggs','fish','milk','nuts']);
+  const allergens = Array.isArray(b.allergens) ? b.allergens : [];
+  if (allergens.some((x: unknown) => typeof x !== 'string' || !allowed.has(x))) {
+    res.status(400).json({ error:'قائمة مسببات الحساسية غير صالحة.' }); return;
+  }
+  const sex = b.sex === 'm' || b.sex === 'f' ? b.sex : null;
+  const age = bounded(b.age,18,100), height = bounded(b.heightCm,120,230);
+  const weight = bounded(b.weightKg,30,300), target = bounded(b.targetWeightKg,30,300);
+  const band = ['S','L','A','V'].includes(b.activityBand) ? b.activityBand : null;
+  const pal = bounded(b.pal,1.2,2.4);
+  const goal = ['bulk','cut','recomp','perf'].includes(b.goal) ? b.goal : null;
+  const adjustment = bounded(b.goalAdjustmentPct,-25,25);
+  if (!sex || age === null || height === null || weight === null || target === null ||
+      !band || pal === null || !goal || adjustment === null) {
+    res.status(400).json({ error:'بيانات الملف ناقصة أو خارج الحدود.' }); return;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('UPDATE app_users SET allergens=$1 WHERE id=$2',[allergens,auth.id]);
+    await client.query(
+      'INSERT INTO customer_profiles (user_id,sex,age,height_cm,weight_kg,target_weight_kg,activity_band,pal,goal,goal_adjustment_pct,health_flags) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (user_id) DO UPDATE SET sex=EXCLUDED.sex,age=EXCLUDED.age,height_cm=EXCLUDED.height_cm,weight_kg=EXCLUDED.weight_kg,target_weight_kg=EXCLUDED.target_weight_kg,activity_band=EXCLUDED.activity_band,pal=EXCLUDED.pal,goal=EXCLUDED.goal,goal_adjustment_pct=EXCLUDED.goal_adjustment_pct,health_flags=EXCLUDED.health_flags,profile_version=customer_profiles.profile_version+1,updated_at=now()',
+      [auth.id,sex,age,height,weight,target,band,pal,goal,adjustment,JSON.stringify(b.healthFlags ?? {})]
+    );
+    await audit(client,auth.id,'profile.updated','customer_profile',auth.id);
+    await client.query('COMMIT');
+    res.json({ saved:true });
+  } catch (error) { await client.query('ROLLBACK'); throw error; }
+  finally { client.release(); }
+}));
+
+app.post('/api/orders', authRequired, requireRole('customer'), asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const b = req.body ?? {};
+  const zoneId = cleanText(b.zoneId,1,80);
+  const mealCount = bounded(b.mealCount,1,8);
+  const note = cleanText(b.note ?? '',0,1000);
+  const items = b.items;
+  if (!zoneId || mealCount === null || !Number.isInteger(mealCount) || note === null ||
+      !Array.isArray(items) || items.length < 1 || items.length > 64) {
+    res.status(400).json({ error:'بيانات الطلب غير مكتملة.' }); return;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const configResult = await client.query('SELECT * FROM pricing_config WHERE id=1 FOR UPDATE');
+    const config = configResult.rows[0];
+    if (!config || Number(config.daily_capacity_boxes) < 1) {
+      await client.query('ROLLBACK');
+      res.status(503).json({ error:'الطاقة التشغيلية لم تعتمد بعد؛ لا نستقبل طلبات حالياً.' }); return;
+    }
+    const zoneResult = await client.query('SELECT id,title,fee_dzd FROM delivery_zones WHERE id=$1 AND active=true FOR SHARE',[zoneId]);
+    if (!zoneResult.rowCount) {
+      await client.query('ROLLBACK');
+      res.status(409).json({ error:'منطقة الخدمة غير متاحة أو لم تعد معتمدة.' }); return;
+    }
+    const customer = await client.query('SELECT allergens FROM app_users WHERE id=$1 FOR SHARE',[auth.id]);
+    const blocked = new Set<string>(customer.rows[0]?.allergens ?? []);
+    const normalized: Array<{slot:number;slotName:string;label:string;grams:number;kcal:number;protein:number;carbs:number;fat:number;ingredients:Ingredient[]}> = [];
+    const slots = new Set<number>();
+
+    for (const item of items) {
+      const slot = bounded(item?.slot,0,mealCount-1);
+      const slotName = cleanText(item?.slotName,1,80);
+      if (slot === null || !Number.isInteger(slot) || !slotName) throw new Error('INVALID_ITEM');
+      slots.add(slot);
+      let ingredients: Ingredient[] = [];
+      let label = '';
+      if (item.kind === 'food') {
+        const grams = bounded(item.grams,1,1500);
+        if (grams === null) throw new Error('INVALID_GRAMS');
+        const found = await client.query(
+          "SELECT id,name_ar,kcal_per_100,protein_per_100,carbs_per_100,fat_per_100,price_dzd_per_100,allergens,nutrition_verified,nutrition_basis,nutrition_source FROM foods WHERE id=$1 AND active=true FOR SHARE",
+          [item.id]
+        );
+        const food = found.rows[0];
+        if (!food) throw new Error('FOOD_UNAVAILABLE');
+        if (!food.nutrition_verified || food.nutrition_basis === 'unspecified' || !food.nutrition_source) throw new Error('FOOD_NOT_VERIFIED');
+        if ((food.allergens ?? []).some((x:string) => blocked.has(x))) throw new Error('ALLERGEN_BLOCK');
+        const factor = grams/100;
+        ingredients = [{id:food.id,name:food.name_ar,grams,price:Number(food.price_dzd_per_100),
+          kcal:Number(food.kcal_per_100)*factor,protein:Number(food.protein_per_100)*factor,
+          carbs:Number(food.carbs_per_100)*factor,fat:Number(food.fat_per_100)*factor}];
+        label = food.name_ar;
+      } else if (item.kind === 'dish') {
+        const multiplier = bounded(item.multiplier ?? 1,0.1,4);
+        if (multiplier === null) throw new Error('INVALID_MULTIPLIER');
+        const found = await client.query(
+          "SELECT d.name_ar,di.grams,f.id AS food_id,f.name_ar AS food_name,f.kcal_per_100,f.protein_per_100,f.carbs_per_100,f.fat_per_100,f.price_dzd_per_100,f.allergens,f.nutrition_verified,f.nutrition_basis,f.nutrition_source FROM dishes d JOIN dish_ingredients di ON di.dish_id=d.id JOIN foods f ON f.id=di.food_id WHERE d.id=$1 AND d.active=true AND f.active=true FOR SHARE OF d,f",
+          [item.id]
+        );
+        if (!found.rowCount) throw new Error('DISH_UNAVAILABLE');
+        label = found.rows[0].name_ar;
+        for (const row of found.rows) {
+          if (!row.nutrition_verified || row.nutrition_basis === 'unspecified' || !row.nutrition_source) throw new Error('FOOD_NOT_VERIFIED');
+          if ((row.allergens ?? []).some((x:string) => blocked.has(x))) throw new Error('ALLERGEN_BLOCK');
+          const grams = Number(row.grams)*multiplier, factor = grams/100;
+          ingredients.push({id:row.food_id,name:row.food_name,grams,price:Number(row.price_dzd_per_100),
+            kcal:Number(row.kcal_per_100)*factor,protein:Number(row.protein_per_100)*factor,
+            carbs:Number(row.carbs_per_100)*factor,fat:Number(row.fat_per_100)*factor});
+        }
+      } else throw new Error('INVALID_KIND');
+
+      const totals = ingredients.reduce((sum,x) => ({
+        grams:sum.grams+x.grams,kcal:sum.kcal+x.kcal,protein:sum.protein+x.protein,
+        carbs:sum.carbs+x.carbs,fat:sum.fat+x.fat,
+      }),{grams:0,kcal:0,protein:0,carbs:0,fat:0});
+      normalized.push({slot,slotName,label,...totals,ingredients});
+    }
+    if (slots.size !== mealCount) throw new Error('INCOMPLETE_SLOTS');
+    for (let slot=0;slot<mealCount;slot++) if (!slots.has(slot)) throw new Error('INCOMPLETE_SLOTS');
+
+    const now = localDateAndHour();
+    const deliveryDate = addDays(now.date,now.hour >= Number(config.cutoff_hour) ? 2 : 1);
+    const capacity = await client.query("SELECT COALESCE(SUM(meal_count),0)::int AS used FROM customer_orders WHERE delivery_date=$1 AND order_status='confirmed'",[deliveryDate]);
+    const used = Number(capacity.rows[0].used);
+    const orderStatus = used + mealCount > Number(config.daily_capacity_boxes) ? 'waitlisted' : 'confirmed';
+    const zone = zoneResult.rows[0];
+    const flatIngredients = normalized.flatMap((item) => item.ingredients);
+    const ingredientCost = flatIngredients.reduce((sum,x) => sum+x.price*x.grams/100,0);
+    const handlingFee = ingredientCost*Number(config.handling_pct)/100;
+    const serviceFee = mealCount*Number(config.service_fee_per_meal);
+    const macros = normalized.reduce((sum,item) => ({
+      kcal:sum.kcal+item.kcal,protein:sum.protein+item.protein,carbs:sum.carbs+item.carbs,fat:sum.fat+item.fat,
+    }),{kcal:0,protein:0,carbs:0,fat:0});
+    const number = orderNumber();
+    const inserted = await client.query(
+      'INSERT INTO customer_orders (order_number,customer_id,delivery_date,delivery_zone_id,delivery_zone_title,delivery_fee_dzd,meal_count,customer_note,ingredient_cost_dzd,handling_fee_dzd,service_fee_dzd,total_dzd,kcal_total,protein_total,carbs_total,fat_total,order_status,production_stage) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING id,order_number,delivery_date,order_status,total_dzd,production_stage',
+      [number,auth.id,deliveryDate,zone.id,zone.title,Number(zone.fee_dzd),mealCount,note,
+       ingredientCost,handlingFee,serviceFee,ingredientCost+handlingFee+serviceFee+Number(zone.fee_dzd),
+       macros.kcal,macros.protein,macros.carbs,macros.fat,orderStatus,orderStatus==='confirmed'?'queued':null]
+    );
+    const order = inserted.rows[0];
+    for (const item of normalized) {
+      const line = await client.query(
+        'INSERT INTO order_items (order_id,slot,slot_name,label,grams,kcal,protein,carbs,fat) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
+        [order.id,item.slot,item.slotName,item.label,item.grams,item.kcal,item.protein,item.carbs,item.fat]
+      );
+      for (const ingredient of item.ingredients) {
+        await client.query(
+          'INSERT INTO order_item_ingredients (order_item_id,food_id,food_name_snapshot,grams,unit_price_snapshot,kcal_snapshot,protein_snapshot,carbs_snapshot,fat_snapshot) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+          [line.rows[0].id,ingredient.id,ingredient.name,ingredient.grams,ingredient.price,
+           ingredient.kcal,ingredient.protein,ingredient.carbs,ingredient.fat]
+        );
+      }
+    }
+    await audit(client,auth.id,'order.created','customer_order',order.id,{number,status:orderStatus,deliveryDate});
+    await client.query('COMMIT');
+    res.status(201).json({ order });
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    const messages: Record<string,string> = {
+      INVALID_ITEM:'أحد عناصر الطلب غير صالح.',INVALID_GRAMS:'وزن أحد المكونات خارج النطاق.',
+      FOOD_UNAVAILABLE:'أحد المكونات غير متاح.',FOOD_NOT_VERIFIED:'لا يمكن طلب مكوّن غير موثق غذائياً.',
+      ALLERGEN_BLOCK:'يتضمن الطلب مسبب حساسية مسجلاً في ملفك.',
+      INVALID_MULTIPLIER:'حجم أحد الأطباق غير صالح.',DISH_UNAVAILABLE:'أحد الأطباق غير متاح.',
+      INVALID_KIND:'نوع عنصر الطلب غير مدعوم.',INCOMPLETE_SLOTS:'يجب أن تحتوي كل وجبة على عنصر واحد على الأقل.',
+    };
+    if (messages[error?.message]) { res.status(400).json({error:messages[error.message]}); return; }
+    throw error;
+  } finally { client.release(); }
+}));
+
+app.get('/api/orders', authRequired, requireRole('customer'), asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const result = await pool.query(
+    "SELECT id,order_number,delivery_date,delivery_zone_title,meal_count,total_dzd,order_status,production_stage,payment_status,created_at FROM customer_orders WHERE customer_id=$1 ORDER BY created_at DESC LIMIT 100",
+    [auth.id]
+  );
+  const ids = result.rows.map((x) => x.id);
+  const items = ids.length ? await pool.query(
+    "SELECT oi.*,COALESCE(json_agg(json_build_object('name',ii.food_name_snapshot,'grams',ii.grams)) FILTER (WHERE ii.id IS NOT NULL),'[]'::json) AS ingredients FROM order_items oi LEFT JOIN order_item_ingredients ii ON ii.order_item_id=oi.id WHERE oi.order_id=ANY($1::uuid[]) GROUP BY oi.id ORDER BY oi.slot,oi.id",
+    [ids]
+  ) : { rows:[] as any[] };
+  const grouped = new Map<string,any[]>();
+  for (const item of items.rows) grouped.set(item.order_id,[...(grouped.get(item.order_id) ?? []),item]);
+  res.json({ orders:result.rows.map((order) => ({...order,items:grouped.get(order.id) ?? []})) });
+}));
+
+app.get('/api/kitchen/orders', authRequired, requireRole('admin','kitchen','delivery'), asyncRoute(async (req,res) => {
+  const date = cleanText(req.query.date,10,10);
+  const params: unknown[] = [];
+  let where = "WHERE o.order_status='confirmed'";
+  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) { params.push(date); where += ' AND o.delivery_date=$1'; }
+  const result = await pool.query(
+    'SELECT o.id,o.order_number,o.delivery_date,o.delivery_zone_title,o.meal_count,o.production_stage,o.customer_note,u.name AS customer_name FROM customer_orders o JOIN app_users u ON u.id=o.customer_id ' + where + ' ORDER BY o.delivery_date,o.created_at',
+    params
+  );
+  res.json({ orders:result.rows });
+}));
+
+app.patch('/api/kitchen/orders/:id/stage', authRequired, requireRole('admin','kitchen','delivery'), asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const stages = ['queued','preparing','packed','out_for_delivery','delivered'];
+  const stage = req.body?.stage;
+  if (!stages.includes(stage)) { res.status(400).json({error:'مرحلة تشغيل غير صالحة.'}); return; }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query("SELECT id,production_stage FROM customer_orders WHERE id=$1 AND order_status='confirmed' FOR UPDATE",[req.params.id]);
+    if (!found.rowCount) { await client.query('ROLLBACK'); res.status(404).json({error:'الطلب غير موجود.'}); return; }
+    const current = found.rows[0].production_stage ?? 'queued';
+    if (stages.indexOf(stage) < stages.indexOf(current)) {
+      await client.query('ROLLBACK'); res.status(409).json({error:'لا يمكن إرجاع الطلب إلى مرحلة سابقة.'}); return;
+    }
+    await client.query('UPDATE customer_orders SET production_stage=$1,updated_at=now() WHERE id=$2',[stage,req.params.id]);
+    await audit(client,auth.id,'order.stage.updated','customer_order',req.params.id,{from:current,to:stage});
+    await client.query('COMMIT');
+    res.json({updated:true,stage});
+  } catch (error) { await client.query('ROLLBACK'); throw error; }
+  finally { client.release(); }
+}));
+
+app.use('/api',(_req,res) => res.status(404).json({error:'مسار API غير موجود.'}));
+app.use((error:any,_req:Request,res:Response,_next:NextFunction) => {
+  if (Number(error?.status) >= 500 || !error?.status) console.error('[api-error]',error);
+  res.status(Number(error?.status) || 500).json({error:'حدث خطأ داخلي. حاول لاحقاً.'});
+});
+const here = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.resolve(here,'../dist')));
+app.get('*',(_req,res) => res.sendFile(path.resolve(here,'../dist/index.html')));
+const server = app.listen(PORT,() => console.log('NutriFit API listening on port ' + PORT));
+async function shutdown() { server.close(); await pool.end(); process.exit(0); }
+process.on('SIGTERM',() => { void shutdown(); });
+process.on('SIGINT',() => { void shutdown(); });
