@@ -1,4 +1,5 @@
 import React from 'react';
+import proteinHero from '../assets/images/dish_atelier_protein_1794529578370.jpg';
 import { ArrowLeft, ArrowUpLeft, BadgeCheck, ChefHat, Clock3, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface WelcomeViewProps {
@@ -71,7 +72,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStart }) => (
       <div className="relative mx-auto w-full max-w-[590px]">
         <div className="absolute -inset-5 rounded-[2rem] border border-[#c8b27e]/10" />
         <div className="relative overflow-hidden rounded-[1.65rem] border border-white/10 bg-[#171a16] shadow-[0_35px_100px_rgba(0,0,0,.45)]">
-          <img src="/assets/images/dish_atelier_protein_1794529578370.jpg" alt="وجبة رياضية محضرة بعناية" className="h-[340px] w-full object-cover sm:h-[440px]" />
+          <img src={proteinHero} alt="وجبة رياضية محضرة بعناية" className="h-[340px] w-full object-cover sm:h-[440px]" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c100d] via-[#0c100d]/5 to-transparent" />
           <div className="absolute right-5 top-5 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-[9px] tracking-[.16em] text-white/85 backdrop-blur-md">THE NUTRITION ATELIER</div>
           <div className="absolute inset-x-5 bottom-5">
