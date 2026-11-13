@@ -582,6 +582,34 @@ app.patch('/api/admin/zones/:id', authRequired, requireRole('admin'), asyncRoute
   res.json({zone:result.rows[0]});
 }));
 
+app.post('/api/admin/orders/:id/confirm', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
+  const auth = (req as AuthRequest).auth!;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const config = await client.query('SELECT daily_capacity_boxes FROM pricing_config WHERE id=1 FOR UPDATE');
+    const orderResult = await client.query("SELECT id,delivery_date,delivery_zone_id,meal_count FROM customer_orders WHERE id=$1 AND order_status='waitlisted' FOR UPDATE",[req.params.id]);
+    if (!orderResult.rowCount) {
+      await client.query('ROLLBACK'); res.status(404).json({error:'طلب الانتظار غير موجود.'}); return;
+    }
+    const order = orderResult.rows[0];
+    const zone = await client.query('SELECT id FROM delivery_zones WHERE id=$1 AND active=true',[order.delivery_zone_id]);
+    if (!zone.rowCount) {
+      await client.query('ROLLBACK'); res.status(409).json({error:'منطقة الطلب لم تعد نشطة؛ راجعها قبل التأكيد.'}); return;
+    }
+    const capacity = await client.query("SELECT COALESCE(SUM(meal_count),0)::int AS used FROM customer_orders WHERE delivery_date=$1 AND order_status='confirmed'",[order.delivery_date]);
+    const cap = Number(config.rows[0]?.daily_capacity_boxes ?? 0);
+    if (cap < 1 || Number(capacity.rows[0].used) + Number(order.meal_count) > cap) {
+      await client.query('ROLLBACK'); res.status(409).json({error:'لا توجد سعة كافية لتأكيد هذا الطلب بعد.'}); return;
+    }
+    await client.query("UPDATE customer_orders SET order_status='confirmed',production_stage='queued',updated_at=now() WHERE id=$1",[order.id]);
+    await audit(client,auth.id,'order.confirmed_from_waitlist','customer_order',order.id);
+    await client.query('COMMIT');
+    res.json({confirmed:true});
+  } catch (error) { await client.query('ROLLBACK'); throw error; }
+  finally { client.release(); }
+}));
+
 app.post('/api/admin/orders/:id/assign-delivery', authRequired, requireRole('admin'), asyncRoute(async (req,res) => {
   const deliveryUserId = cleanText(req.body?.deliveryUserId,1,80);
   if (!deliveryUserId) { res.status(400).json({error:'معرّف حساب التوصيل مطلوب.'}); return; }
