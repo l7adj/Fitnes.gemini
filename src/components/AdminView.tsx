@@ -161,6 +161,23 @@ export const AdminView: React.FC<AdminViewProps> = ({
   };
 
   const updateZone = (id: string, patch: Partial<DeliveryZone>) => {
+    if (patch.active === true) {
+      const zone = state.zones.find((item) => item.id === id);
+      const title = patch.title ?? zone?.title ?? '';
+      const areas = patch.areas ?? zone?.areas ?? '';
+      const hours = patch.hours ?? zone?.hours ?? '';
+      if (
+        !title.trim() ||
+        !areas.trim() ||
+        !hours.trim() ||
+        areas.includes('غير معتمد') ||
+        hours.includes('تجريبي') ||
+        hours.includes('يُحدد')
+      ) {
+        onToast('لا يمكن تفعيل المنطقة قبل إدخال اسمها والأحياء وساعات الخدمة الفعلية');
+        return;
+      }
+    }
     onUpdate((prev) => ({
       ...prev,
       zones: prev.zones.map((z) => (z.id === id ? { ...z, ...patch } : z)),
@@ -171,14 +188,14 @@ export const AdminView: React.FC<AdminViewProps> = ({
     const nextIdx = state.zones.length + 1;
     const newZone: DeliveryZone = {
       id: `z_${Date.now().toString().slice(-5)}`,
-      title: `المنطقة ${nextIdx}`,
-      areas: 'أحياء إضافية',
-      hours: '07:00 – 08:30 صباحًا',
-      fee: 400,
-      active: true,
+      title: `منطقة جديدة ${nextIdx}`,
+      areas: '',
+      hours: '',
+      fee: 0,
+      active: false,
     };
     onUpdate((prev) => ({ ...prev, zones: [...prev.zones, newZone] }));
-    onToast('أُضيفت منطقة توصيل جديدة');
+    onToast('أُضيفت منطقة غير مفعلة؛ أدخل بيانات الخدمة الفعلية قبل تفعيلها');
   };
 
   const deleteZone = (id: string) => {
