@@ -10,6 +10,8 @@ import { CartView } from './components/CartView';
 import { JournalView } from './components/JournalView';
 import { AccountView } from './components/AccountView';
 import { AdminView } from './components/AdminView';
+import { AuthView } from './components/AuthView';
+import { API_ENABLED, apiRequest, ApiSession, ApiUser } from './services/api';
 import {
   Home,
   ShoppingBag,
@@ -65,10 +67,121 @@ function loadState(): AppState {
 export default function App() {
   const [state, setState] = useState<AppState>(loadState);
   const [showWelcome, setShowWelcome] = useState(() => state.ob === 0);
+  const [session, setSession] = useState<ApiSession | null>(null);
+  const [sessionReady, setSessionReady] = useState(!API_ENABLED);
+
+  const hydrateRemoteWorkspace = async (token: string, user: ApiUser) => {
+    const [profileResponse, foodsResponse, dishesResponse, zonesResponse] = await Promise.all([
+      apiRequest<{ profile: any }>('/api/profile', token),
+      apiRequest<{ foods: any[] }>('/api/foods', token),
+      apiRequest<{ dishes: any[] }>('/api/dishes', token),
+      apiRequest<{ zones: any[] }>('/api/zones', token),
+    ]);
+    const profile = profileResponse.profile;
+    const foods = foodsResponse.foods.map((food) => ({
+      id: food.id,
+      emoji: food.category === 'protein' ? '🍗' : food.category === 'carb' ? '🍚' : food.category === 'fat' ? '🫒' : food.category === 'veg' ? '🥦' : '🥤',
+      name: food.name_ar,
+      cat: food.category,
+      unitLabel: food.category === 'juice' ? '100مل' : undefined,
+      per100: {
+        kcal: Number(food.kcal_per_100), p: Number(food.protein_per_100),
+        c: Number(food.carbs_per_100), f: Number(food.fat_per_100), fiber: Number(food.fiber_per_100),
+      },
+      price: Number(food.price_dzd_per_100),
+      al: food.allergens ?? [],
+      available: true,
+      nutritionDataStatus: 'verified' as const,
+      nutritionBasis: food.nutrition_basis,
+      nutritionSource: food.nutrition_source,
+    }));
+    const dishes = dishesResponse.dishes.map((dish) => ({
+      id: dish.id,
+      emoji: '🍽️',
+      name: dish.name_ar,
+      ing: (dish.ingredients ?? []).map((ingredient: any) => [ingredient.foodId, Number(ingredient.grams)] as [string, number]),
+      available: true,
+    }));
+    const zones = zonesResponse.zones.map((zone) => ({
+      id: zone.id, title: zone.title, areas: zone.areas, hours: zone.service_hours,
+      fee: Number(zone.fee_dzd), active: true,
+    }));
+    const hasProfile = Boolean(profile?.age);
+    setState((prev) => ({
+      ...prev,
+      name: profile?.name || user.name,
+      sex: profile?.sex || prev.sex,
+      age: Number(profile?.age) || prev.age,
+      h: Number(profile?.height_cm) || prev.h,
+      w: Number(profile?.weight_kg) || prev.w,
+      targetWeight: Number(profile?.target_weight_kg) || prev.targetWeight,
+      lbm: Number(profile?.lbm_kg) || 0,
+      rel: Number(profile?.lbm_reliability_pct) || 0,
+      lbmMethod: profile?.lbm_method || 'none',
+      band: profile?.activity_band || prev.band,
+      pal: Number(profile?.pal) || prev.pal,
+      goal: profile?.goal || prev.goal,
+      pct: Number(profile?.goal_adjustment_pct) || 0,
+      al: profile?.allergens ?? [],
+      fl: profile?.health_flags ?? { preg:false,kid:false,dia:false,ed:false },
+      foods,
+      dishes,
+      zones,
+      zoneId: zones[0]?.id ?? '',
+      meals: [],
+      ord: [],
+      jr: [],
+      photos: [],
+      ob: hasProfile ? 6 : 0,
+      tab: 'home',
+      adminMode: false,
+    }));
+    setShowWelcome(!hasProfile);
+  };
+
+  const handleAuthenticated = async (nextSession: ApiSession) => {
+    localStorage.setItem('nf_auth_token', nextSession.token);
+    setSession(nextSession);
+    await hydrateRemoteWorkspace(nextSession.token, nextSession.user);
+    setSessionReady(true);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('nf_auth_token');
+    setSession(null);
+    setState(createInitialState());
+    setShowWelcome(true);
+  };
+
+  useEffect(() => {
+    if (!API_ENABLED) return;
+    let cancelled = false;
+    const token = localStorage.getItem('nf_auth_token');
+    if (!token) {
+      setSessionReady(true);
+      return;
+    }
+    apiRequest<{ user: ApiUser }>('/api/auth/me', token)
+      .then(async ({ user }) => {
+        if (cancelled) return;
+        const restored = { token, user };
+        setSession(restored);
+        await hydrateRemoteWorkspace(token, user);
+      })
+      .catch(() => {
+        localStorage.removeItem('nf_auth_token');
+        if (!cancelled) setSession(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSessionReady(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [pickerRequest, setPickerRequest] = useState<{ slot: number; seq: number } | null>(null);
 
   useEffect(() => {
+    if (API_ENABLED) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
@@ -136,6 +249,24 @@ export default function App() {
     { id: 'me', label: 'حسابي', icon: <User className="w-5 h-5" /> },
   ];
 
+  if (API_ENABLED && !sessionReady) {
+    return <div className="min-h-screen bg-[#0b0e0c] text-[#e5cf94] flex items-center justify-center text-sm">جارٍ التحقق من الجلسة وتحميل ملفك…</div>;
+  }
+  if (API_ENABLED && !session) {
+    return <AuthView onAuthenticated={handleAuthenticated} />;
+  }
+  if (API_ENABLED && session && session.user.role !== 'customer') {
+    return (
+      <main dir="rtl" className="min-h-screen bg-[#0b0e0c] text-[#f4f1e9] flex items-center justify-center p-6">
+        <div className="max-w-md rounded-2xl border border-[#34372e] bg-[#121612] p-6 text-center space-y-3">
+          <h1 className="text-xl font-bold">حساب فريق NutriFit</h1>
+          <p className="text-sm leading-6 text-[#aaa79b]">تم تسجيل الدخول بصلاحية {session.user.role}، لكن واجهة العمليات المتصلة لم تُفعّل بعد لهذا الحساب.</p>
+          <button type="button" onClick={logout} className="rounded-xl bg-[#c9a85c] px-5 py-3 text-sm font-bold text-[#17140d]">تسجيل الخروج</button>
+        </div>
+      </main>
+    );
+  }
+
   // Onboarding / Scientific Calculator Wizard
   if (state.ob < 6 && state.tab !== 'admin') {
     if (showWelcome) {
@@ -146,9 +277,23 @@ export default function App() {
         <CalculatorWizard
           state={state}
           onUpdate={setState}
-          onFinish={() =>
-            setState((prev) => ({ ...prev, ob: 6, tab: 'home' }))
-          }
+          onFinish={() => {
+            if (API_ENABLED && session) {
+              const payload = {
+                sex: state.sex, age: state.age, heightCm: state.h, weightKg: state.w,
+                targetWeightKg: state.targetWeight, lbmKg: state.lbm,
+                lbmReliabilityPct: state.rel, lbmMethod: state.lbmMethod ?? 'none',
+                activityBand: state.band, pal: state.pal, goal: state.goal,
+                goalAdjustmentPct: state.pct, allergens: state.al, healthFlags: state.fl,
+              };
+              void apiRequest('/api/profile', session.token, {
+                method: 'PUT', body: JSON.stringify(payload),
+              }).then(() => setState((prev) => ({ ...prev, ob: 6, tab: 'home' })))
+                .catch((error) => showToast(error instanceof Error ? error.message : 'تعذر حفظ الملف على الخادم.'));
+            } else {
+              setState((prev) => ({ ...prev, ob: 6, tab: 'home' }));
+            }
+          }}
         />
       </div>
     );
@@ -189,9 +334,14 @@ export default function App() {
       <GlobalStatusBar state={state} />
 
       <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-3">
-        <span className="text-[11px] font-semibold text-[#6d6b62]">
-          NutriFit DZ · بوابة العميل
-        </span>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11px] font-semibold text-[#6d6b62]">
+            NutriFit DZ · بوابة العميل
+          </span>
+          {API_ENABLED && session && (
+            <button type="button" onClick={logout} className="text-[10px] text-[#c9a85c] underline underline-offset-4">تسجيل الخروج</button>
+          )}
+        </div>
         {import.meta.env.DEV && (
           <button
             type="button"
@@ -282,6 +432,8 @@ export default function App() {
               onNavigate={navigate}
               onSelectMealSlot={selectMealSlotAndGoMenu}
               onToast={showToast}
+              apiEnabled={API_ENABLED}
+              authToken={session?.token}
             />
           )}
           {state.tab === 'jr' && (
